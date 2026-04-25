@@ -1,0 +1,31 @@
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: "images/uploads"
+public_folder: "/images/uploads"
+
+collections:
+  - name: "scholarships"
+    label: "Scholarships"
+    folder: "scholarships"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - {label: "Title", name: "title", widget: "string"}
+      - {label: "Date Added", name: "date_added", widget: "datetime"}
+      - {label: "Status", name: "status", widget: "select", options: ["open", "soon", "closed"]}
+      - {label: "Country", name: "country", widget: "string"}
+      - {label: "Flag Emoji", name: "flag", widget: "string"}
+      - {label: "Level", name: "level", widget: "string", hint: "e.g. MS / PhD / BS"}
+      - {label: "Funding Type", name: "funding_type", widget: "string"}
+      - {label: "Amount", name: "amount", widget: "string"}
+      - {label: "Deadline", name: "deadline", widget: "string"}
+      - {label: "Duration", name: "duration", widget: "string"}
+      - {label: "Host", name: "host", widget: "string"}
+      - {label: "Short Description", name: "description", widget: "text"}
+      - {label: "Full Description", name: "full_description", widget: "markdown"}
+      - {label: "Official Website", name: "website", widget: "string"}
+      - {label: "YouTube Video URL", name: "youtube_url", widget: "string", required: false}
+      - {label: "Tags", name: "tags", widget: "list"}
+      - {label: "Featured", name: "featured", widget: "boolean", default: false}
