@@ -172,6 +172,7 @@ section{padding:90px 6vw}
    YOUTUBE
 ━━━━━━━━━━━━━━━━━━━━ */
 .youtube{background:var(--dark2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .yt-hd{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:36px;flex-wrap:wrap;gap:16px}
 .yt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
 .yc{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:transform .2s,border-color .2s;text-decoration:none}
@@ -553,14 +554,21 @@ footer{padding:36px 6vw;border-top:1px solid var(--border);display:flex;justify-
 <section class="youtube" id="videos">
   <div class="yt-hd">
     <div><div class="stag">YouTube</div><h2 class="stitle">Latest Videos</h2></div>
-    <a href="#" target="_blank" class="btn-g" id="ytSubscribeBtn" style="font-size:.82rem;padding:9px 20px">Subscribe ↗</a>
+    <a href="https://www.youtube.com/@adeelakram3811" target="_blank" class="btn-g" id="ytSubscribeBtn" style="font-size:.82rem;padding:9px 20px">Subscribe ↗</a>
   </div>
-  <div class="yt-grid">
-    <a href="#" class="yc"><div class="yt-thumb"><div class="yt-bg"></div><div class="yt-play">▶</div><span class="yt-dur">15:42</span></div><div class="yi"><h4>How to Apply for DAAD Scholarship 2026 – Full Guide</h4><div class="ym"><span>24K views</span><span>2 weeks ago</span></div></div></a>
-    <a href="#" class="yc"><div class="yt-thumb"><div class="yt-bg"></div><div class="yt-play">▶</div><span class="yt-dur">22:10</span></div><div class="yi"><h4>Motivation Letter That Won Me a Fulbright – Template Inside</h4><div class="ym"><span>18K views</span><span>1 month ago</span></div></div></a>
-    <a href="#" class="yc"><div class="yt-thumb"><div class="yt-bg"></div><div class="yt-play">▶</div><span class="yt-dur">11:55</span></div><div class="yi"><h4>Top 10 Fully Funded Scholarships Open Right Now</h4><div class="ym"><span>31K views</span><span>3 weeks ago</span></div></div></a>
-    <a href="#" class="yc"><div class="yt-thumb"><div class="yt-bg"></div><div class="yt-play">▶</div><span class="yt-dur">18:33</span></div><div class="yi"><h4>Chevening Interview Tips – What They Really Ask</h4><div class="ym"><span>12K views</span><span>5 weeks ago</span></div></div></a>
+  <!-- Loading state -->
+  <div id="ytLoading" style="text-align:center;padding:40px;color:var(--muted)">
+    <div style="font-size:2rem;margin-bottom:12px;animation:spin 1s linear infinite;display:inline-block">⏳</div>
+    <div style="font-size:.9rem">Loading latest videos from YouTube…</div>
   </div>
+  <!-- Error state -->
+  <div id="ytError" style="display:none;text-align:center;padding:40px;color:var(--muted)">
+    <div style="font-size:2rem;margin-bottom:12px">📺</div>
+    <div style="font-size:.9rem;margin-bottom:16px">Could not load videos right now.</div>
+    <a href="https://www.youtube.com/@adeelakram3811" target="_blank" class="btn-p" style="font-size:.85rem;padding:10px 22px">Visit YouTube Channel ↗</a>
+  </div>
+  <!-- Videos grid - populated by JS -->
+  <div class="yt-grid" id="ytGrid" style="display:none"></div>
 </section>
 
 <!-- ━━ CONNECT ━━ -->
@@ -716,7 +724,146 @@ fetch('/settings/general.json')
 
 /* ── Scroll reveal ── */
 const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.style.animation='up .55s ease both';obs.unobserve(e.target)}})},{threshold:.1});
-document.querySelectorAll('.card,.yc,.soc-card,.feat').forEach(el=>{el.style.opacity='0';obs.observe(el)});
+document.querySelectorAll('.card,.soc-card,.feat').forEach(el=>{el.style.opacity='0';obs.observe(el)});
+/* ━━━━━━━━━━━━━━━━━━━━
+   YOUTUBE AUTO LOADER
+━━━━━━━━━━━━━━━━━━━━ */
+const YT_API_KEY = 'AIzaSyApabepfo4m6bTen7yzjmgFGYiWxbGFaO0';
+const YT_HANDLE  = 'adeelakram3811';
+const YT_MAX     = 6; // number of videos to show
+
+function timeAgo(dateStr) {
+  const now = new Date();
+  const past = new Date(dateStr);
+  const diff = Math.floor((now - past) / 1000);
+  if (diff < 3600)   return Math.floor(diff/60) + ' minutes ago';
+  if (diff < 86400)  return Math.floor(diff/3600) + ' hours ago';
+  if (diff < 604800) return Math.floor(diff/86400) + ' days ago';
+  if (diff < 2592000)return Math.floor(diff/604800) + ' weeks ago';
+  if (diff < 31536000)return Math.floor(diff/2592000) + ' months ago';
+  return Math.floor(diff/31536000) + ' years ago';
+}
+
+function formatViews(n) {
+  n = parseInt(n) || 0;
+  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000)    return (n/1000).toFixed(1) + 'K';
+  return n.toString();
+}
+
+function renderVideos(videos) {
+  const grid = document.getElementById('ytGrid');
+  const loading = document.getElementById('ytLoading');
+  const error = document.getElementById('ytError');
+
+  if (!videos || videos.length === 0) {
+    loading.style.display = 'none';
+    error.style.display = 'block';
+    return;
+  }
+
+  grid.innerHTML = videos.map(v => `
+    <a href="https://www.youtube.com/watch?v=${v.id}" target="_blank" class="yc" style="opacity:0;animation:up .5s ease forwards">
+      <div class="yt-thumb" style="background:#000">
+        <img src="${v.thumb}" alt="${v.title}"
+          style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity:.85">
+        <div class="yt-play" style="position:relative;z-index:2">▶</div>
+      </div>
+      <div class="yi">
+        <h4>${v.title}</h4>
+        <div class="ym">
+          <span>👁 ${formatViews(v.views)} views</span>
+          <span>${timeAgo(v.published)}</span>
+        </div>
+      </div>
+    </a>`).join('');
+
+  loading.style.display = 'none';
+  error.style.display = 'none';
+  grid.style.display = 'grid';
+}
+
+async function loadYouTubeVideos() {
+  try {
+    // Step 1: Get Channel ID from handle
+    const chanRes = await fetch(
+      `https://www.googleapis.com/youtube/v3/channels?part=id,contentDetails,statistics&forHandle=${YT_HANDLE}&key=${YT_API_KEY}`
+    );
+    const chanData = await chanRes.json();
+
+    if (!chanData.items || chanData.items.length === 0) {
+      throw new Error('Channel not found');
+    }
+
+    const channel = chanData.items[0];
+    const uploadsPlaylistId = channel.contentDetails.relatedPlaylists.uploads;
+    const subscriberCount = channel.statistics.subscriberCount;
+
+    // Update subscriber count on page from real data
+    const heroYt = document.getElementById('heroYtCount');
+    const ytCount = document.getElementById('ytCount');
+    if (subscriberCount) {
+      const formatted = formatViews(subscriberCount);
+      if (heroYt) heroYt.textContent = formatted;
+      if (ytCount) ytCount.textContent = formatted;
+    }
+
+    // Step 2: Get latest videos from uploads playlist
+    const plRes = await fetch(
+      `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=${YT_MAX}&playlistId=${uploadsPlaylistId}&key=${YT_API_KEY}`
+    );
+    const plData = await plRes.json();
+
+    if (!plData.items || plData.items.length === 0) {
+      throw new Error('No videos found');
+    }
+
+    // Step 3: Get video stats (views) for each video
+    const videoIds = plData.items
+      .map(item => item.snippet.resourceId.videoId)
+      .join(',');
+
+    const statsRes = await fetch(
+      `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${videoIds}&key=${YT_API_KEY}`
+    );
+    const statsData = await statsRes.json();
+
+    // Build stats map
+    const statsMap = {};
+    (statsData.items || []).forEach(v => {
+      statsMap[v.id] = v.statistics;
+    });
+
+    // Step 4: Build final video list
+    const videos = plData.items.map(item => {
+      const s = item.snippet;
+      const vid = s.resourceId.videoId;
+      const stats = statsMap[vid] || {};
+      return {
+        id: vid,
+        title: s.title,
+        thumb: s.thumbnails.high
+          ? s.thumbnails.high.url
+          : s.thumbnails.medium
+            ? s.thumbnails.medium.url
+            : s.thumbnails.default.url,
+        published: s.publishedAt,
+        views: stats.viewCount || 0
+      };
+    });
+
+    renderVideos(videos);
+
+  } catch (err) {
+    console.error('YouTube load error:', err);
+    document.getElementById('ytLoading').style.display = 'none';
+    document.getElementById('ytError').style.display = 'block';
+  }
+}
+
+// Load videos when page loads
+loadYouTubeVideos();
+
 </script>
 </body>
 </html>
