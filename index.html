@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScholarPath – International Scholarship Guide</title>
+<!-- Netlify Identity Widget: required so invite/recovery links work from homepage -->
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script>
+  // When someone clicks the invite link in email, Netlify redirects to homepage
+  // This script catches that and sends them to /admin to complete setup
+  if (window.location.hash && window.location.hash.includes('invite_token')) {
+    window.location.href = '/admin' + window.location.hash;
+  }
+  if (window.location.hash && window.location.hash.includes('recovery_token')) {
+    window.location.href = '/admin' + window.location.hash;
+  }
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#C9A84C; --gold-light:#E8C97A;
+  --dark:#0D0D0D; --dark2:#161616; --dark3:#1E1E1E;
+  --card:#1A1A1A; --border:rgba(201,168,76,0.2);
+  --text:#E8E4DC; --muted:#7A7570; --white:#FAF8F4;
+  --rh:48px; --nh:64px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--dark);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden;padding-top:calc(var(--rh) + var(--nh))}
+
+/* ━━━━━━━━━━━━━━━━━━━━
+   RIBBON
+━━━━━━━━━━━━━━━━━━━━ */
+.ribbon{position:fixed;top:0;left:0;right:0;z-index:300;height:var(--rh);background:#080808;border-bottom:1px solid rgba(201,168,76,0.4);display:flex;align-items:stretch}
+.ribbon-inner{display:flex;align-items:stretch;width:100%;padding:0 4vw}
+
+/* dropdown trigger */
+.rdrop{position:relative;display:flex;align-items:center}
+.rdrop-btn{display:flex;align-items:center;gap:7px;height:100%;padding:0 22px;background:none;border:none;color:var(--text);font-family:inherit;font-size:0.8rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;border-right:1px solid rgba(201,168,76,0.12);transition:background .2s,color .2s;white-space:nowrap}
+.rdrop-btn:hover,.rdrop.open .rdrop-btn{background:rgba(201,168,76,0.1);color:var(--gold)}
+.arr{font-size:0.55rem;opacity:.55;transition:transform .25s}
+.rdrop.open .arr{transform:rotate(180deg);opacity:1}
+
+/* panel */
+.rdrop-panel{position:absolute;top:var(--rh);left:0;background:#0f0f0f;border:1px solid rgba(201,168,76,0.22);border-top:2px solid var(--gold);border-radius:0 0 8px 8px;overflow:hidden;opacity:0;pointer-events:none;transform:translateY(-8px);transition:opacity .2s,transform .2s;z-index:400;min-width:210px}
+.rdrop.open .rdrop-panel{opacity:1;pointer-events:all;transform:translateY(0)}
+.rdrop-panel a{display:flex;align-items:center;gap:10px;padding:11px 18px;color:var(--text);text-decoration:none;font-size:0.84rem;font-weight:500;border-bottom:1px solid rgba(255,255,255,0.04);transition:background .15s,color .15s;white-space:nowrap}
+.rdrop-panel a:last-child{border-bottom:none}
+.rdrop-panel a:hover{background:rgba(201,168,76,0.1);color:var(--gold)}
+.di{font-size:.75rem;opacity:.4;margin-left:auto}
+
+/* country panel – 2 col grid */
+.panel-countries{min-width:340px}
+.country-grid{display:grid;grid-template-columns:1fr 1fr}
+.country-grid a{border-right:1px solid rgba(255,255,255,0.03)}
+.country-all{border-top:1px solid rgba(201,168,76,0.15)!important;background:rgba(201,168,76,0.03)}
+
+/* search */
+.ribbon-search{margin-left:auto;display:flex;align-items:center;padding:0 0 0 16px}
+.s-wrap{display:flex;align-items:center;background:rgba(255,255,255,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:5px;overflow:hidden;transition:border-color .2s}
+.s-wrap:focus-within{border-color:var(--gold)}
+#sInput{background:none;border:none;outline:none;color:var(--text);font-family:inherit;font-size:0.8rem;padding:7px 12px;width:190px}
+#sInput::placeholder{color:var(--muted)}
+.s-btn{background:none;border:none;cursor:pointer;color:var(--muted);padding:7px 11px;font-size:.9rem;transition:color .2s;display:flex;align-items:center}
+.s-btn:hover{color:var(--gold)}
+
+/* search results */
+#sResults{position:fixed;top:calc(var(--rh) + var(--nh) + 8px);right:4vw;width:min(580px,90vw);background:#0f0f0f;border:1px solid rgba(201,168,76,0.28);border-top:2px solid var(--gold);border-radius:8px;display:none;max-height:400px;overflow-y:auto;z-index:500;box-shadow:0 20px 60px rgba(0,0,0,.75)}
+#sResults.on{display:block}
+.sr-row{display:flex;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;transition:background .15s;text-decoration:none}
+.sr-row:hover{background:rgba(201,168,76,0.07)}
+.sr-row:last-child{border-bottom:none}
+.sr-flag{font-size:1.6rem;flex-shrink:0}
+.sr-body h4{font-size:.88rem;font-weight:600;color:var(--white)}
+.sr-body p{font-size:.76rem;color:var(--muted);margin-top:2px}
+.sr-right{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.sr-none{padding:20px;text-align:center;color:var(--muted);font-size:.84rem}
+
+/* ━━━━━━━━━━━━━━━━━━━━
+   NAV
+━━━━━━━━━━━━━━━━━━━━ */
+nav{position:fixed;top:var(--rh);left:0;right:0;z-index:200;height:var(--nh);display:flex;align-items:center;justify-content:space-between;padding:0 4vw;background:rgba(13,13,13,0.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+.logo{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:900;color:var(--gold);text-decoration:none}
+.logo span{color:var(--white)}
+.nav-links{display:flex;gap:28px;list-style:none}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:.84rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;transition:color .2s}
+.nav-links a:hover{color:var(--gold)}
+.nav-cta{background:var(--gold);color:var(--dark);padding:8px 20px;border-radius:4px;font-size:.82rem;font-weight:600;text-decoration:none;transition:all .2s}
+.nav-cta:hover{background:var(--gold-light)}
+
+/* ━━━━━━━━━━━━━━━━━━━━
+   HERO
+━━━━━━━━━━━━━━━━━━━━ */
+.hero{min-height:calc(100vh - var(--rh) - var(--nh));display:flex;flex-direction:column;justify-content:center;padding:80px 6vw;position:relative;overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 60% 60% at 80% 40%,rgba(201,168,76,.08) 0%,transparent 70%),radial-gradient(ellipse 40% 40% at 10% 80%,rgba(201,168,76,.05) 0%,transparent 60%)}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(201,168,76,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,.04) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse at center,black 40%,transparent 80%)}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(201,168,76,.1);border:1px solid var(--border);color:var(--gold);font-size:.76rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:7px 16px;border-radius:100px;margin-bottom:26px;width:fit-content;animation:up .6s ease both}
+.hero-tag::before{content:'✦';font-size:.62rem}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(2.6rem,6.5vw,5rem);font-weight:900;line-height:1.06;color:var(--white);max-width:800px;animation:up .7s .1s ease both}
+.hero h1 em{font-style:normal;color:var(--gold);position:relative}
+.hero h1 em::after{content:'';position:absolute;left:0;bottom:-4px;right:0;height:3px;background:linear-gradient(90deg,var(--gold),transparent);border-radius:2px}
+.hero-sub{margin-top:22px;font-size:1.05rem;color:var(--muted);line-height:1.7;max-width:540px;animation:up .7s .2s ease both}
+.hero-actions{display:flex;align-items:center;gap:14px;margin-top:34px;flex-wrap:wrap;animation:up .7s .3s ease both}
+.btn-p{background:var(--gold);color:var(--dark);padding:13px 28px;border-radius:4px;font-size:.9rem;font-weight:600;text-decoration:none;transition:all .2s;display:inline-flex;align-items:center;gap:8px}
+.btn-p:hover{background:var(--gold-light);transform:translateY(-2px);box-shadow:0 12px 40px rgba(201,168,76,.3)}
+.btn-g{border:1px solid var(--border);color:var(--text);padding:13px 28px;border-radius:4px;font-size:.9rem;font-weight:500;text-decoration:none;transition:all .2s;display:inline-flex;align-items:center;gap:8px}
+.btn-g:hover{border-color:var(--gold);color:var(--gold)}
+.hero-stats{display:flex;gap:32px;margin-top:50px;flex-wrap:wrap;animation:up .7s .4s ease both}
+.stat-num{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--gold);line-height:1;display:block}
+.stat-lbl{font-size:.76rem;color:var(--muted);margin-top:4px;letter-spacing:.06em;text-transform:uppercase}
+.sdiv{width:1px;background:var(--border);align-self:stretch}
+
+/* ━━━━━━━━━━━━━━━━━━━━
+   SECTION
+━━━━━━━━━━━━━━━━━━━━ */
+section{padding:90px 6vw}
+.stag{display:inline-flex;align-items:center;gap:8px;color:var(--gold);font-size:.76rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px}
+.stag::before{content:'—'}
+.stitle{font-family:'Playfair Display',serif;font-size:clamp(1.9rem,3.8vw,2.8rem);font-weight:700;line-height:1.15;color:var(--white);max-width:540px;margin-bottom:12px}
+.sdesc{color:var(--muted);max-width:460px;line-height:1.7}
+
+/* ━━━━━━━━━━━━━━━━━━━━
+   ABOUT
+━━━━━━━━━━━━━━━━━━━━ */
+.about{background:var(--dark2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
+.img-box{width:100%;aspect-ratio:4/5;background:var(--dark3);border:1px solid var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.img-box::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(201,168,76,.05),transparent 60%)}
+.img-ph{font-size:5rem;opacity:.45}
+.a-badge{position:absolute;bottom:-18px;right:-18px;background:var(--gold);color:var(--dark);padding:16px 20px;border-radius:4px;font-family:'Playfair Display',serif;font-weight:700}
+.a-badge .n{font-size:1.8rem;line-height:1;display:block}
+.a-badge .l{font-size:.7rem;font-family:'DM Sans',sans-serif;letter-spacing:.08em}
+.feats{margin-top:26px;display:flex;flex-direction:column;gap:13px}
+.feat{display:flex;align-items:flex-start;gap:13px;padding:13px;border:1px solid var(--border);border-radius:4px;background:rgba(201,168,76,.03);transition:border-color .2s}
+.feat:hover{border-color:rgba(201,168,76,.4)}
+.ficon{width:34px;height:34px;border-radius:4px;background:rgba(201,168,76,.12);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.fbody h4{font-size:.92rem;font-weight:600;color:var(--white);margin-bottom:3px}
+.fbody p{font-size:.82rem;color:var(--muted);line-height:1.5}
+
+/* ━━━━━━━━━━━━━━━━━━━━
+   SCHOLARSHIPS
+━━━━━━━━━━━━━━━━━━━━ */
+.sch-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:36px;flex-wrap:wrap;gap:18px}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap}
+.fb{background:transparent;border:1px solid var(--border);color:var(--muted);padding:7px 16px;border-radius:100px;font-size:.79rem;cursor:pointer;font-family:inherit;transition:all .2s}
+.fb:hover,.fb.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,.08)}
+.sch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+
+/* card */
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:transform .22s,border-color .22s,box-shadow .22s;text-decoration:none;display:flex;flex-direction:column}
+.card:hover{transform:translateY(-5px);border-color:rgba(201,168,76,.45);box-shadow:0 24px 64px rgba(0,0,0,.45)}
+.card-top{padding:18px 18px 0;display:flex;justify-content:space-between;align-items:flex-start}
+.cflag{font-size:1.8rem}
+.cbadges{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.cb{font-size:.68rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:3px 9px;border-radius:100px}
+.b-open{background:rgba(74,222,128,.12);color:#4ADE80;border:1px solid rgba(74,222,128,.22)}
+.b-soon{background:rgba(251,191,36,.12);color:#FBBF24;border:1px solid rgba(251,191,36,.22)}
+.b-closed{background:rgba(248,113,113,.12);color:#F87171;border:1px solid rgba(248,113,113,.22)}
+.b-new{background:rgba(201,168,76,.15);color:var(--gold);border:1px solid rgba(201,168,76,.3);font-size:.64rem}
+.card-body{padding:13px 18px 16px;flex:1}
+.card-body h3{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:var(--white);margin-bottom:6px;line-height:1.3}
+.card-body p{font-size:.82rem;color:var(--muted);line-height:1.6;margin-bottom:12px}
+.cmeta{display:flex;gap:12px;flex-wrap:wrap}
+.mi{display:flex;align-items:center;gap:4px;font-size:.75rem;color:var(--muted)}
+.card-footer{border-top:1px solid var(--border);padding:11px 18px;display:flex;justify-content:space-between;align-items:center;margin-top:auto}
+.cfund{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:700;color:var(--gold)}
+.clink{font-size:.78rem;font-weight:600;color:var(--gold);text-decoration:none;display:flex;align-items:center;gap:4px;transition:gap .15s}
+.clink:hover{gap:8px}
+
+/* ━━━━━━━━━━━━━━━━━━━━
+   YOUTUBE
+━━━━━━━━━━━━━━━━━━━━ */
+.youtube{background:var(--dark2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.yt-hd{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:36px;flex-wrap:wrap;gap:16px}
+.yt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
+.yc{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:transform .2s,border-color .2s;text-decoration:none}
+.yc:hover{transform:translateY(-3px);border-color:rgba(201,168,76,.4)}
+.yt-thumb{width:100%;aspect-ratio:16/9;background:var(--dark3);display:flex;align-items:center;justify-content:center;position:relative}
+.yt-bg{position:absolute;inset:0;background:linear-gradient(135deg,#1a0808,#0d0d0d)}
+.yt-play{width:46px;height:46px;background:rgba(255,0,0,.85);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;position:relative;z-index:1;transition:transform .2s,background .2s}
+.yc:hover .yt-play{transform:scale(1.1);background:#FF0000}
+.yt-dur{position:absolute;bottom:8px;right:8px;background:rgba(0,0,0,.8);color:#fff;font-size:.68rem;font-weight:600;padding:2px 6px;border-radius:3px;z-index:1}
+.yi{padding:13px}
+.yi h4{font-size:.9rem;font-weight:600;color:var(--white);line-height:1.4;margin-bottom:6px}
+.ym{display:flex;justify-content:space-between;font-size:.74rem;color:var(--muted)}
+
+/* ━━━━━━━━━━━━━━━━━━━━
+   SOCIAL
+━━━━━━━━━━━━━━━━━━━━ */
+.soc-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.soc-card{border:1px solid var(--border);border-radius:8px;padding:30px;display:flex;align-items:center;gap:20px;transition:border-color .2s,background .2s;text-decoration:none}
+.soc-card:hover{border-color:rgba(201,168,76,.4);background:rgba(201,168,76,.03)}
+.soc-icon{font-size:2.2rem;flex-shrink:0}
+.soc-info h3{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:var(--white)}
+.soc-info p{font-size:.82rem;color:var(--muted);margin-top:4px}
+.soc-cnt{margin-left:auto;text-align:right;flex-shrink:0}
+.soc-cnt .n{font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:700;color:var(--gold);line-height:1;display:block}
+.soc-cnt .l{font-size:.68rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+
+/* ━━━━━━━━━━━━━━━━━━━━
+   NEWSLETTER
+━━━━━━━━━━━━━━━━━━━━ */
+.nl{background:var(--dark2);border-top:1px solid var(--border);text-align:center}
+.nl-in{max-width:500px;margin:0 auto}
+.nl-ico{font-size:2.8rem;margin-bottom:18px}
+.nl .stitle{max-width:100%;text-align:center;margin:0 auto 10px}
+.nl .sdesc{text-align:center;margin:0 auto 30px}
+.nl-form{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.nl-form input{flex:1;min-width:220px;background:var(--dark3);border:1px solid var(--border);color:var(--text);padding:12px 16px;border-radius:4px;font-family:inherit;font-size:.9rem;outline:none;transition:border-color .2s}
+.nl-form input:focus{border-color:var(--gold)}
+.nl-form input::placeholder{color:var(--muted)}
+.nl-form button{background:var(--gold);color:var(--dark);border:none;padding:12px 24px;border-radius:4px;font-family:inherit;font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s}
+.nl-form button:hover{background:var(--gold-light)}
+
+/* ━━━━━━━━━━━━━━━━━━━━
+   FOOTER
+━━━━━━━━━━━━━━━━━━━━ */
+footer{padding:36px 6vw;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px}
+.flogo{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:900;color:var(--gold)}
+.flinks{display:flex;gap:20px}
+.flinks a{color:var(--muted);text-decoration:none;font-size:.82rem;transition:color .2s}
+.flinks a:hover{color:var(--gold)}
+.fcopy{font-size:.76rem;color:var(--muted)}
+
+@keyframes up{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:768px){
+  :root{--rh:42px;--nh:56px}
+  .nav-links{display:none}
+  .about-grid{grid-template-columns:1fr}
+  .img-box{display:none}
+  .soc-grid{grid-template-columns:1fr}
+  .hero-stats{gap:16px}
+  .sdiv{display:none}
+  footer{flex-direction:column;text-align:center}
+  .flinks{flex-wrap:wrap;justify-content:center}
+  #sInput{width:130px}
+  .rdrop-btn{padding:0 12px;font-size:.72rem}
+  .panel-countries{min-width:260px}
+  .country-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ━━ RIBBON ━━ -->
+<div class="ribbon">
+  <div class="ribbon-inner">
+
+    <!-- By Level -->
+    <div class="rdrop" id="rl">
+      <button class="rdrop-btn" onclick="tDrop('rl')">🎓 By Level <span class="arr">▾</span></button>
+      <div class="rdrop-panel">
+        <a href="#scholarships" onclick="fTag('bs');cDrop('rl')">🎒 Bachelor's (BS) <span class="di">→</span></a>
+        <a href="#scholarships" onclick="fTag('ms');cDrop('rl')">📚 Master's (MS) <span class="di">→</span></a>
+        <a href="#scholarships" onclick="fTag('phd');cDrop('rl')">🔬 PhD / Doctorate <span class="di">→</span></a>
+        <a href="#scholarships" onclick="fTag('internship');cDrop('rl')">💼 Internship <span class="di">→</span></a>
+        <a href="#scholarships" onclick="fTag('fully');cDrop('rl')">💰 Fully Funded <span class="di">→</span></a>
+        <a href="#scholarships" onclick="fTag('all');cDrop('rl')">✦ All Levels <span class="di">→</span></a>
+      </div>
+    </div>
+
+    <!-- By Country -->
+    <div class="rdrop" id="rc">
+      <button class="rdrop-btn" onclick="tDrop('rc')">🌍 By Country <span class="arr">▾</span></button>
+      <div class="rdrop-panel panel-countries">
+        <div class="country-grid">
+          <a href="#scholarships" onclick="fCountry('usa');cDrop('rc')">🇺🇸 USA</a>
+          <a href="#scholarships" onclick="fCountry('china');cDrop('rc')">🇨🇳 China</a>
+          <a href="#scholarships" onclick="fCountry('taiwan');cDrop('rc')">🇹🇼 Taiwan</a>
+          <a href="#scholarships" onclick="fCountry('germany');cDrop('rc')">🇩🇪 Germany</a>
+          <a href="#scholarships" onclick="fCountry('italy');cDrop('rc')">🇮🇹 Italy</a>
+          <a href="#scholarships" onclick="fCountry('hungary');cDrop('rc')">🇭🇺 Hungary</a>
+          <a href="#scholarships" onclick="fCountry('netherlands');cDrop('rc')">🇳🇱 Netherlands</a>
+          <a href="#scholarships" onclick="fCountry('austria');cDrop('rc')">🇦🇹 Austria</a>
+          <a href="#scholarships" onclick="fCountry('uk');cDrop('rc')">🇬🇧 UK</a>
+          <a href="#scholarships" onclick="fCountry('japan');cDrop('rc')">🇯🇵 Japan</a>
+          <a href="#scholarships" onclick="fCountry('south-korea');cDrop('rc')">🇰🇷 South Korea</a>
+          <a href="#scholarships" onclick="fCountry('turkey');cDrop('rc')">🇹🇷 Turkey</a>
+          <a href="#scholarships" onclick="fCountry('canada');cDrop('rc')">🇨🇦 Canada</a>
+          <a href="#scholarships" onclick="fCountry('australia');cDrop('rc')">🇦🇺 Australia</a>
+          <a href="#scholarships" onclick="fCountry('sweden');cDrop('rc')">🇸🇪 Sweden</a>
+          <a href="#scholarships" onclick="fCountry('switzerland');cDrop('rc')">🇨🇭 Switzerland</a>
+          <a href="#scholarships" onclick="fCountry('france');cDrop('rc')">🇫🇷 France</a>
+          <a href="#scholarships" onclick="fCountry('norway');cDrop('rc')">🇳🇴 Norway</a>
+        </div>
+        <a class="country-all" href="#scholarships" onclick="fTag('all');cDrop('rc')">✦ All Countries <span class="di">→</span></a>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="ribbon-search">
+      <div class="s-wrap">
+        <input id="sInput" type="text" placeholder="Search scholarships…"
+          oninput="doSearch(this.value)" onkeydown="if(event.key==='Escape')closeSearch()">
+        <button class="s-btn" onclick="doSearch(document.getElementById('sInput').value)">🔍</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Search results -->
+<div id="sResults"></div>
+
+<!-- ━━ NAV ━━ -->
+<nav>
+  <a class="logo" href="#">Scholar<span>Path</span></a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#scholarships">Scholarships</a></li>
+    <li><a href="#videos">Videos</a></li>
+    <li><a href="#connect">Connect</a></li>
+  </ul>
+  <a href="#newsletter" class="nav-cta">Get Updates</a>
+</nav>
+
+<!-- ━━ HERO ━━ -->
+<section class="hero" id="home">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-tag">International Scholarship Guide</div>
+  <h1>Your Gateway to <em>Global</em><br>Education Opportunities</h1>
+  <p class="hero-sub">Helping students worldwide discover, apply, and win fully-funded international scholarships. Join thousands on the path to global education.</p>
+  <div class="hero-actions">
+    <a href="#scholarships" class="btn-p">Browse Scholarships ↓</a>
+    <a href="#videos" class="btn-g">▶ Watch Videos</a>
+  </div>
+  <div class="hero-stats">
+    <div><span class="stat-num">26K</span><span class="stat-lbl">Facebook Followers</span></div>
+    <div class="sdiv"></div>
+    <div><span class="stat-num">7K</span><span class="stat-lbl">YouTube Subscribers</span></div>
+    <div class="sdiv"></div>
+    <div><span class="stat-num">100+</span><span class="stat-lbl">Scholarships Listed</span></div>
+    <div class="sdiv"></div>
+    <div><span class="stat-num">50+</span><span class="stat-lbl">Countries Covered</span></div>
+  </div>
+</section>
+
+<!-- ━━ ABOUT ━━ -->
+<section class="about" id="about">
+  <div class="about-grid">
+    <div style="position:relative">
+      <div class="img-box"><span class="img-ph">🎓</span></div>
+      <div class="a-badge"><span class="n">3+</span><span class="l">Years Guiding</span></div>
+    </div>
+    <div>
+      <div class="stag">About Me</div>
+      <h2 class="stitle" style="max-width:100%">Dedicated to Opening Doors for Students Worldwide</h2>
+      <p class="sdesc">Passionate about making international scholarships accessible to everyone. Through Facebook and YouTube I share detailed guides, tips, and real success stories.</p>
+      <div class="feats">
+        <div class="feat"><div class="ficon">🔍</div><div class="fbody"><h4>Deep Research</h4><p>Every scholarship carefully vetted with accurate deadlines and requirements.</p></div></div>
+        <div class="feat"><div class="ficon">📝</div><div class="fbody"><h4>Application Guidance</h4><p>Step-by-step tutorials for motivation letters, CVs, and interviews.</p></div></div>
+        <div class="feat"><div class="ficon">🌍</div><div class="fbody"><h4>Global Coverage</h4><p>Scholarships across Europe, USA, Asia, Australia, and beyond.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ━━ SCHOLARSHIPS ━━ -->
+<section id="scholarships">
+  <div class="sch-header">
+    <div>
+      <div class="stag">Newest First</div>
+      <h2 class="stitle">Latest Scholarships</h2>
+    </div>
+    <div class="filter-row">
+      <button class="fb active" onclick="fBtn(this,'all')">All</button>
+      <button class="fb" onclick="fBtn(this,'bs')">BS</button>
+      <button class="fb" onclick="fBtn(this,'ms')">MS</button>
+      <button class="fb" onclick="fBtn(this,'phd')">PhD</button>
+      <button class="fb" onclick="fBtn(this,'internship')">Internship</button>
+      <button class="fb" onclick="fBtn(this,'fully')">Fully Funded</button>
+    </div>
+  </div>
+
+  <!-- SCHOLARSHIP CARDS — data-date YYYYMMDD, newest first after JS sort -->
+  <div class="sch-grid" id="schGrid">
+
+    <a class="card" href="scholarship.html?id=daad" target="_blank"
+       data-date="20260422" data-country="germany" data-tag="europe fully ms phd germany"
+       data-title="DAAD Scholarship – Germany" data-desc="Fully funded postgraduate scholarships at German universities." data-fund="Fully Funded" data-status="open">
+      <div class="card-top"><span class="cflag">🇩🇪</span>
+        <div class="cbadges"><span class="cb b-new">🆕 New</span><span class="cb b-open">Open</span></div>
+      </div>
+      <div class="card-body">
+        <h3>DAAD Scholarship – Germany</h3>
+        <p>Fully funded postgraduate scholarships for international students at top German universities.</p>
+        <div class="cmeta"><span class="mi">📅 Deadline: Nov 15</span><span class="mi">🎓 MS / PhD</span></div>
+      </div>
+      <div class="card-footer"><span class="cfund">Fully Funded</span><span class="clink">Open Details →</span></div>
+    </a>
+
+    <a class="card" href="scholarship.html?id=stipendium" target="_blank"
+       data-date="20260419" data-country="hungary" data-tag="europe fully ms phd bs hungary"
+       data-title="Stipendium Hungaricum – Hungary" data-desc="Covers tuition, accommodation, and monthly allowance." data-fund="Fully Funded" data-status="open">
+      <div class="card-top"><span class="cflag">🇭🇺</span>
+        <div class="cbadges"><span class="cb b-new">🆕 New</span><span class="cb b-open">Open</span></div>
+      </div>
+      <div class="card-body">
+        <h3>Stipendium Hungaricum – Hungary</h3>
+        <p>Covers tuition, accommodation, and monthly allowance for international students at all levels.</p>
+        <div class="cmeta"><span class="mi">📅 Deadline: Jan 15</span><span class="mi">🎓 BS / MS / PhD</span></div>
+      </div>
+      <div class="card-footer"><span class="cfund">Fully Funded</span><span class="clink">Open Details →</span></div>
+    </a>
+
+    <a class="card" href="scholarship.html?id=taiwan-icdf" target="_blank"
+       data-date="20260415" data-country="taiwan" data-tag="asia fully ms phd taiwan"
+       data-title="Taiwan ICDF Scholarship" data-desc="Full funding for international graduate students in Taiwan." data-fund="Fully Funded" data-status="open">
+      <div class="card-top"><span class="cflag">🇹🇼</span>
+        <div class="cbadges"><span class="cb b-open">Open</span></div>
+      </div>
+      <div class="card-body">
+        <h3>Taiwan ICDF Scholarship</h3>
+        <p>Full funding for international students pursuing graduate degrees at top Taiwanese universities.</p>
+        <div class="cmeta"><span class="mi">📅 Deadline: Mar 31</span><span class="mi">🎓 MS / PhD</span></div>
+      </div>
+      <div class="card-footer"><span class="cfund">Fully Funded</span><span class="clink">Open Details →</span></div>
+    </a>
+
+    <a class="card" href="scholarship.html?id=italy-gov" target="_blank"
+       data-date="20260410" data-country="italy" data-tag="europe ms phd italy"
+       data-title="Italian Government Scholarship" data-desc="Study in Italy with support from the Italian Ministry." data-fund="Partial Funding" data-status="open">
+      <div class="card-top"><span class="cflag">🇮🇹</span>
+        <div class="cbadges"><span class="cb b-open">Open</span></div>
+      </div>
+      <div class="card-body">
+        <h3>Italian Government Scholarship</h3>
+        <p>Study in Italy with support from the Italian Ministry of Foreign Affairs and International Cooperation.</p>
+        <div class="cmeta"><span class="mi">📅 Deadline: May 10</span><span class="mi">🎓 MS / PhD</span></div>
+      </div>
+      <div class="card-footer"><span class="cfund">Partial Funding</span><span class="clink">Open Details →</span></div>
+    </a>
+
+    <a class="card" href="scholarship.html?id=oead" target="_blank"
+       data-date="20260406" data-country="austria" data-tag="europe fully ms phd internship austria"
+       data-title="OeAD Austria Scholarship" data-desc="Austrian government scholarships and research grants." data-fund="Fully Funded" data-status="open">
+      <div class="card-top"><span class="cflag">🇦🇹</span>
+        <div class="cbadges"><span class="cb b-open">Open</span></div>
+      </div>
+      <div class="card-body">
+        <h3>OeAD Austria Scholarship</h3>
+        <p>Austrian government scholarships and research grants for international postgraduate students.</p>
+        <div class="cmeta"><span class="mi">📅 Deadline: Jun 1</span><span class="mi">🎓 MS / PhD</span></div>
+      </div>
+      <div class="card-footer"><span class="cfund">Fully Funded</span><span class="clink">Open Details →</span></div>
+    </a>
+
+    <a class="card" href="scholarship.html?id=fulbright" target="_blank"
+       data-date="20260320" data-country="usa" data-tag="usa fully ms phd"
+       data-title="Fulbright Program – USA" data-desc="Prestigious exchange scholarship for graduate study in the US." data-fund="Fully Funded" data-status="open">
+      <div class="card-top"><span class="cflag">🇺🇸</span>
+        <div class="cbadges"><span class="cb b-open">Open</span></div>
+      </div>
+      <div class="card-body">
+        <h3>Fulbright Program – USA</h3>
+        <p>Prestigious exchange scholarship for graduate study, research, and teaching in the United States.</p>
+        <div class="cmeta"><span class="mi">📅 Deadline: Oct 10</span><span class="mi">🎓 MS / Research</span></div>
+      </div>
+      <div class="card-footer"><span class="cfund">Fully Funded</span><span class="clink">Open Details →</span></div>
+    </a>
+
+    <a class="card" href="scholarship.html?id=chevening" target="_blank"
+       data-date="20260314" data-country="uk" data-tag="europe fully ms uk"
+       data-title="Chevening Scholarship – UK" data-desc="UK government global scholarship for future leaders." data-fund="Fully Funded" data-status="soon">
+      <div class="card-top"><span class="cflag">🇬🇧</span>
+        <div class="cbadges"><span class="cb b-soon">Closing Soon</span></div>
+      </div>
+      <div class="card-body">
+        <h3>Chevening Scholarship – UK</h3>
+        <p>The UK government's flagship global scholarship for outstanding future leaders.</p>
+        <div class="cmeta"><span class="mi">📅 Deadline: Nov 2</span><span class="mi">🎓 MS</span></div>
+      </div>
+      <div class="card-footer"><span class="cfund">Fully Funded</span><span class="clink">Open Details →</span></div>
+    </a>
+
+    <a class="card" href="scholarship.html?id=holland" target="_blank"
+       data-date="20260302" data-country="netherlands" data-tag="europe bs ms netherlands"
+       data-title="Holland Scholarship – Netherlands" data-desc="Financial support for non-EEA international students." data-fund="€5,000" data-status="open">
+      <div class="card-top"><span class="cflag">🇳🇱</span>
+        <div class="cbadges"><span class="cb b-open">Open</span></div>
+      </div>
+      <div class="card-body">
+        <h3>Holland Scholarship – Netherlands</h3>
+        <p>Financial support for international students from outside the European Economic Area.</p>
+        <div class="cmeta"><span class="mi">📅 Deadline: Feb 1</span><span class="mi">🎓 BS / MS</span></div>
+      </div>
+      <div class="card-footer"><span class="cfund">€5,000</span><span class="clink">Open Details →</span></div>
+    </a>
+
+    <a class="card" href="scholarship.html?id=mext" target="_blank"
+       data-date="20260218" data-country="japan" data-tag="asia fully bs ms phd japan"
+       data-title="MEXT Scholarship – Japan" data-desc="Japanese government scholarship for all study levels." data-fund="Fully Funded" data-status="open">
+      <div class="card-top"><span class="cflag">🇯🇵</span>
+        <div class="cbadges"><span class="cb b-open">Open</span></div>
+      </div>
+      <div class="card-body">
+        <h3>MEXT Scholarship – Japan</h3>
+        <p>Japanese government scholarship for undergraduate and graduate international students.</p>
+        <div class="cmeta"><span class="mi">📅 Deadline: May 20</span><span class="mi">🎓 BS / MS / PhD</span></div>
+      </div>
+      <div class="card-footer"><span class="cfund">Fully Funded</span><span class="clink">Open Details →</span></div>
+    </a>
+
+    <a class="card" href="scholarship.html?id=csc" target="_blank"
+       data-date="20260115" data-country="china" data-tag="asia fully bs ms phd china"
+       data-title="CSC Scholarship – China" data-desc="Chinese Government Scholarship for all study levels." data-fund="Fully Funded" data-status="closed">
+      <div class="card-top"><span class="cflag">🇨🇳</span>
+        <div class="cbadges"><span class="cb b-closed">Closed</span></div>
+      </div>
+      <div class="card-body">
+        <h3>CSC Scholarship – China</h3>
+        <p>Chinese Government Scholarship for full-time undergraduate and postgraduate students.</p>
+        <div class="cmeta"><span class="mi">📅 Opens: March</span><span class="mi">🎓 BS / MS / PhD</span></div>
+      </div>
+      <div class="card-footer"><span class="cfund">Fully Funded</span><span class="clink">Open Details →</span></div>
+    </a>
+
+    <a class="card" href="scholarship.html?id=erasmus" target="_blank"
+       data-date="20260110" data-country="europe" data-tag="europe fully ms phd internship"
+       data-title="Erasmus Mundus – Europe" data-desc="EU joint master's and PhD scholarships across European universities." data-fund="Fully Funded" data-status="open">
+      <div class="card-top"><span class="cflag">🇪🇺</span>
+        <div class="cbadges"><span class="cb b-open">Open</span></div>
+      </div>
+      <div class="card-body">
+        <h3>Erasmus Mundus – Europe</h3>
+        <p>EU-funded joint master's and PhD scholarships across multiple top European universities.</p>
+        <div class="cmeta"><span class="mi">📅 Deadline: Jan 20</span><span class="mi">🎓 MS / PhD</span></div>
+      </div>
+      <div class="card-footer"><span class="cfund">Fully Funded</span><span class="clink">Open Details →</span></div>
+    </a>
+
+    <a class="card" href="scholarship.html?id=kgsp" target="_blank"
+       data-date="20260105" data-country="south-korea" data-tag="asia fully bs ms phd south-korea"
+       data-title="KGSP – South Korea" data-desc="Korean Government Scholarship for international students at all levels." data-fund="Fully Funded" data-status="open">
+      <div class="card-top"><span class="cflag">🇰🇷</span>
+        <div class="cbadges"><span class="cb b-open">Open</span></div>
+      </div>
+      <div class="card-body">
+        <h3>KGSP – South Korea</h3>
+        <p>Korean Government Scholarship for international students at undergraduate and graduate levels.</p>
+        <div class="cmeta"><span class="mi">📅 Deadline: Feb 28</span><span class="mi">🎓 BS / MS / PhD</span></div>
+      </div>
+      <div class="card-footer"><span class="cfund">Fully Funded</span><span class="clink">Open Details →</span></div>
+    </a>
+
+  </div>
+</section>
+
+<!-- ━━ YOUTUBE ━━ -->
+<section class="youtube" id="videos">
+  <div class="yt-hd">
+    <div><div class="stag">YouTube</div><h2 class="stitle">Latest Videos</h2></div>
+    <a href="https://youtube.com" target="_blank" class="btn-g" style="font-size:.82rem;padding:9px 20px">Subscribe ↗</a>
+  </div>
+  <div class="yt-grid">
+    <a href="#" class="yc"><div class="yt-thumb"><div class="yt-bg"></div><div class="yt-play">▶</div><span class="yt-dur">15:42</span></div><div class="yi"><h4>How to Apply for DAAD Scholarship 2026 – Full Guide</h4><div class="ym"><span>24K views</span><span>2 weeks ago</span></div></div></a>
+    <a href="#" class="yc"><div class="yt-thumb"><div class="yt-bg"></div><div class="yt-play">▶</div><span class="yt-dur">22:10</span></div><div class="yi"><h4>Motivation Letter That Won Me a Fulbright – Template Inside</h4><div class="ym"><span>18K views</span><span>1 month ago</span></div></div></a>
+    <a href="#" class="yc"><div class="yt-thumb"><div class="yt-bg"></div><div class="yt-play">▶</div><span class="yt-dur">11:55</span></div><div class="yi"><h4>Top 10 Fully Funded Scholarships Open Right Now</h4><div class="ym"><span>31K views</span><span>3 weeks ago</span></div></div></a>
+    <a href="#" class="yc"><div class="yt-thumb"><div class="yt-bg"></div><div class="yt-play">▶</div><span class="yt-dur">18:33</span></div><div class="yi"><h4>Chevening Interview Tips – What They Really Ask</h4><div class="ym"><span>12K views</span><span>5 weeks ago</span></div></div></a>
+  </div>
+</section>
+
+<!-- ━━ CONNECT ━━ -->
+<section id="connect">
+  <div style="margin-bottom:40px"><div class="stag">Community</div><h2 class="stitle">Connect & Follow</h2><p class="sdesc">Join thousands of students getting daily scholarship updates on my social channels.</p></div>
+  <div class="soc-grid">
+    <a href="https://facebook.com" target="_blank" class="soc-card"><div class="soc-icon">📘</div><div class="soc-info"><h3>Facebook Page</h3><p>Daily scholarship alerts & community discussions</p></div><div class="soc-cnt"><span class="n">26K</span><span class="l">Followers</span></div></a>
+    <a href="https://youtube.com" target="_blank" class="soc-card"><div class="soc-icon">▶️</div><div class="soc-info"><h3>YouTube Channel</h3><p>In-depth guides, tutorials & success stories</p></div><div class="soc-cnt"><span class="n">7K</span><span class="l">Subscribers</span></div></a>
+  </div>
+</section>
+
+<!-- ━━ NEWSLETTER ━━ -->
+<section class="nl" id="newsletter">
+  <div class="nl-in">
+    <div class="nl-ico">✉️</div>
+    <div class="stag" style="justify-content:center">Stay Updated</div>
+    <h2 class="stitle">Never Miss a Scholarship Deadline</h2>
+    <p class="sdesc">Get the latest fully funded scholarships delivered straight to your inbox every week.</p>
+    <div class="nl-form">
+      <input type="email" placeholder="Enter your email address">
+      <button type="button">Subscribe Free</button>
+    </div>
+  </div>
+</section>
+
+<!-- ━━ FOOTER ━━ -->
+<footer>
+  <div class="flogo">ScholarPath</div>
+  <div class="flinks">
+    <a href="#home">Home</a><a href="#scholarships">Scholarships</a>
+    <a href="#videos">Videos</a><a href="#connect">Connect</a><a href="#newsletter">Newsletter</a>
+  </div>
+  <div class="fcopy">© 2026 ScholarPath. All rights reserved.</div>
+</footer>
+
+<script>
+/* ── Read cards into JS array ── */
+const cards = Array.from(document.querySelectorAll('#schGrid .card')).map(c=>({
+  el:c, title:c.dataset.title, desc:c.dataset.desc,
+  tag:c.dataset.tag, country:c.dataset.country,
+  date:parseInt(c.dataset.date), fund:c.dataset.fund,
+  status:c.dataset.status,
+  flag:c.querySelector('.cflag').textContent,
+  href:c.getAttribute('href')
+}));
+
+/* ── Sort latest first ── */
+const grid=document.getElementById('schGrid');
+cards.sort((a,b)=>b.date-a.date).forEach(c=>grid.appendChild(c.el));
+
+/* ── Filter state ── */
+let aTag='all', aCountry='';
+
+function applyFilter(){
+  cards.forEach(c=>{
+    let show=true;
+    if(aCountry) show=c.country===aCountry;
+    else if(aTag!=='all') show=(' '+c.tag+' ').includes(' '+aTag+' ');
+    c.el.style.display=show?'':'none';
+    if(show){c.el.style.opacity='0';c.el.style.animation='up .38s ease forwards'}
+  });
+}
+
+function fBtn(btn,tag){
+  document.querySelectorAll('.fb').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  aTag=tag; aCountry=''; applyFilter();
+}
+
+function fTag(tag){
+  aTag=tag; aCountry='';
+  document.querySelectorAll('.fb').forEach(b=>b.classList.toggle('active',b.textContent.trim().toLowerCase()===tag||(tag==='all'&&b.textContent.trim()==='All')));
+  applyFilter();
+  setTimeout(()=>document.getElementById('scholarships').scrollIntoView({behavior:'smooth'}),120);
+}
+
+function fCountry(c){
+  aCountry=c; aTag='all';
+  document.querySelectorAll('.fb').forEach((b,i)=>b.classList.toggle('active',i===0));
+  applyFilter();
+  setTimeout(()=>document.getElementById('scholarships').scrollIntoView({behavior:'smooth'}),120);
+}
+
+/* ── Dropdowns ── */
+function tDrop(id){const e=document.getElementById(id);const was=e.classList.contains('open');document.querySelectorAll('.rdrop').forEach(d=>d.classList.remove('open'));if(!was)e.classList.add('open')}
+function cDrop(id){document.getElementById(id).classList.remove('open')}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.rdrop'))document.querySelectorAll('.rdrop').forEach(d=>d.classList.remove('open'));
+  if(!e.target.closest('.s-wrap')&&!e.target.closest('#sResults'))closeSearch();
+});
+
+/* ── Search ── */
+const statusCls={open:'b-open',soon:'b-soon',closed:'b-closed'};
+const statusLabel={open:'Open',soon:'Closing Soon',closed:'Closed'};
+
+function doSearch(q){
+  const box=document.getElementById('sResults');
+  q=q.trim().toLowerCase();
+  if(!q){closeSearch();return}
+  const hits=cards.filter(c=>c.title.toLowerCase().includes(q)||c.desc.toLowerCase().includes(q)||c.tag.toLowerCase().includes(q)||c.country.toLowerCase().includes(q));
+  if(!hits.length){
+    box.innerHTML='<div class="sr-none">No results for "<strong>'+q+'</strong>"</div>';
+  }else{
+    box.innerHTML=hits.map(c=>`
+      <a class="sr-row" href="${c.href}" target="_blank">
+        <div class="sr-flag">${c.flag}</div>
+        <div class="sr-body"><h4>${c.title}</h4><p>${c.desc}</p></div>
+        <div class="sr-right">
+          <span class="cb ${statusCls[c.status]||'b-open'}">${statusLabel[c.status]||'Open'}</span>
+          <span style="font-size:.75rem;color:var(--gold);font-weight:600">${c.fund}</span>
+        </div>
+      </a>`).join('');
+  }
+  box.classList.add('on');
+}
+
+function closeSearch(){document.getElementById('sResults').classList.remove('on')}
+
+/* ── Scroll reveal ── */
+const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.style.animation='up .55s ease both';obs.unobserve(e.target)}})},{threshold:.1});
+document.querySelectorAll('.card,.yc,.soc-card,.feat').forEach(el=>{el.style.opacity='0';obs.observe(el)});
+</script>
+</body>
+</html>

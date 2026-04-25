@@ -1,0 +1,16 @@
+[build]
+  # No build command needed — this is a plain HTML site
+  command = ""
+  publish = "."
+
+# Serve admin panel correctly
+[[redirects]]
+  from = "/admin"
+  to = "/admin/index.html"
+  status = 200
+
+# Make sure scholarship detail page works
+[[redirects]]
+  from = "/scholarship"
+  to = "/scholarship.html"
+  status = 200
