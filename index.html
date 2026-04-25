@@ -328,9 +328,9 @@ footer{padding:36px 6vw;border-top:1px solid var(--border);display:flex;justify-
     <a href="#videos" class="btn-g">▶ Watch Videos</a>
   </div>
   <div class="hero-stats">
-    <div><span class="stat-num">26K</span><span class="stat-lbl">Facebook Followers</span></div>
+    <div><span class="stat-num" id="heroFbCount">26K</span><span class="stat-lbl">Facebook Followers</span></div>
     <div class="sdiv"></div>
-    <div><span class="stat-num">7K</span><span class="stat-lbl">YouTube Subscribers</span></div>
+    <div><span class="stat-num" id="heroYtCount">7K</span><span class="stat-lbl">YouTube Subscribers</span></div>
     <div class="sdiv"></div>
     <div><span class="stat-num">100+</span><span class="stat-lbl">Scholarships Listed</span></div>
     <div class="sdiv"></div>
@@ -553,7 +553,7 @@ footer{padding:36px 6vw;border-top:1px solid var(--border);display:flex;justify-
 <section class="youtube" id="videos">
   <div class="yt-hd">
     <div><div class="stag">YouTube</div><h2 class="stitle">Latest Videos</h2></div>
-    <a href="https://youtube.com" target="_blank" class="btn-g" style="font-size:.82rem;padding:9px 20px">Subscribe ↗</a>
+    <a href="#" target="_blank" class="btn-g" id="ytSubscribeBtn" style="font-size:.82rem;padding:9px 20px">Subscribe ↗</a>
   </div>
   <div class="yt-grid">
     <a href="#" class="yc"><div class="yt-thumb"><div class="yt-bg"></div><div class="yt-play">▶</div><span class="yt-dur">15:42</span></div><div class="yi"><h4>How to Apply for DAAD Scholarship 2026 – Full Guide</h4><div class="ym"><span>24K views</span><span>2 weeks ago</span></div></div></a>
@@ -567,8 +567,8 @@ footer{padding:36px 6vw;border-top:1px solid var(--border);display:flex;justify-
 <section id="connect">
   <div style="margin-bottom:40px"><div class="stag">Community</div><h2 class="stitle">Connect & Follow</h2><p class="sdesc">Join thousands of students getting daily scholarship updates on my social channels.</p></div>
   <div class="soc-grid">
-    <a href="https://facebook.com" target="_blank" class="soc-card"><div class="soc-icon">📘</div><div class="soc-info"><h3>Facebook Page</h3><p>Daily scholarship alerts & community discussions</p></div><div class="soc-cnt"><span class="n">26K</span><span class="l">Followers</span></div></a>
-    <a href="https://youtube.com" target="_blank" class="soc-card"><div class="soc-icon">▶️</div><div class="soc-info"><h3>YouTube Channel</h3><p>In-depth guides, tutorials & success stories</p></div><div class="soc-cnt"><span class="n">7K</span><span class="l">Subscribers</span></div></a>
+    <a href="#" target="_blank" class="soc-card" id="fbCard"><div class="soc-icon">📘</div><div class="soc-info"><h3>Facebook Page</h3><p>Daily scholarship alerts & community discussions</p></div><div class="soc-cnt"><span class="n" id="fbCount">26K</span><span class="l">Followers</span></div></a>
+    <a href="#" target="_blank" class="soc-card" id="ytCard"><div class="soc-icon">▶️</div><div class="soc-info"><h3>YouTube Channel</h3><p>In-depth guides, tutorials & success stories</p></div><div class="soc-cnt"><span class="n" id="ytCount">7K</span><span class="l">Subscribers</span></div></a>
   </div>
 </section>
 
@@ -678,6 +678,41 @@ function doSearch(q){
 }
 
 function closeSearch(){document.getElementById('sResults').classList.remove('on')}
+/* ── Load settings from CMS (settings/general.json) ── */
+fetch('/settings/general.json')
+  .then(r => r.json())
+  .then(s => {
+    // Update Facebook link everywhere
+    if (s.facebook_url) {
+      const fbCard = document.getElementById('fbCard');
+      if (fbCard) fbCard.href = s.facebook_url;
+    }
+    // Update YouTube link everywhere
+    if (s.youtube_url) {
+      const ytCard = document.getElementById('ytCard');
+      if (ytCard) ytCard.href = s.youtube_url;
+      const ytBtn = document.getElementById('ytSubscribeBtn');
+      if (ytBtn) ytBtn.href = s.youtube_url;
+    }
+    // Update follower counts
+    if (s.fb_followers) {
+      const heroFb = document.getElementById('heroFbCount');
+      if (heroFb) heroFb.textContent = s.fb_followers;
+      const fbCount = document.getElementById('fbCount');
+      if (fbCount) fbCount.textContent = s.fb_followers;
+    }
+    if (s.yt_subscribers) {
+      const heroYt = document.getElementById('heroYtCount');
+      if (heroYt) heroYt.textContent = s.yt_subscribers;
+      const ytCount = document.getElementById('ytCount');
+      if (ytCount) ytCount.textContent = s.yt_subscribers;
+    }
+  })
+  .catch(() => {
+    // If file not found, keep default values — no error shown to user
+    console.log('Settings file not loaded, using defaults');
+  });
+
 
 /* ── Scroll reveal ── */
 const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.style.animation='up .55s ease both';obs.unobserve(e.target)}})},{threshold:.1});
