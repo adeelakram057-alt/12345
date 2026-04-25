@@ -1,31 +1,98 @@
-backend:
-  name: git-gateway
-  branch: main
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ScholarPath Admin</title>
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head>
+<body>
+  <script>
+    // Point CMS to the correct config file location
+    window.CMS_MANUAL_INIT = true;
+  </script>
 
-media_folder: "images/uploads"
-public_folder: "/images/uploads"
+  <script src="https://unpkg.com/netlify-cms@^2.0.0/dist/netlify-cms.js"></script>
 
-collections:
-  - name: "scholarships"
-    label: "Scholarships"
-    folder: "scholarships"
-    create: true
-    slug: "{{slug}}"
-    fields:
-      - {label: "Title", name: "title", widget: "string"}
-      - {label: "Date Added", name: "date_added", widget: "datetime"}
-      - {label: "Status", name: "status", widget: "select", options: ["open", "soon", "closed"]}
-      - {label: "Country", name: "country", widget: "string"}
-      - {label: "Flag Emoji", name: "flag", widget: "string"}
-      - {label: "Level", name: "level", widget: "string", hint: "e.g. MS / PhD / BS"}
-      - {label: "Funding Type", name: "funding_type", widget: "string"}
-      - {label: "Amount", name: "amount", widget: "string"}
-      - {label: "Deadline", name: "deadline", widget: "string"}
-      - {label: "Duration", name: "duration", widget: "string"}
-      - {label: "Host", name: "host", widget: "string"}
-      - {label: "Short Description", name: "description", widget: "text"}
-      - {label: "Full Description", name: "full_description", widget: "markdown"}
-      - {label: "Official Website", name: "website", widget: "string"}
-      - {label: "YouTube Video URL", name: "youtube_url", widget: "string", required: false}
-      - {label: "Tags", name: "tags", widget: "list"}
-      - {label: "Featured", name: "featured", widget: "boolean", default: false}
+  <script>
+    CMS.init({
+      config: {
+        backend: {
+          name: 'git-gateway',
+          branch: 'main'
+        },
+        media_folder: 'images/uploads',
+        public_folder: '/images/uploads',
+        collections: [
+          {
+            name: 'scholarships',
+            label: 'Scholarships',
+            folder: 'scholarships',
+            create: true,
+            slug: '{{slug}}',
+            fields: [
+              { label: 'Title', name: 'title', widget: 'string' },
+              { label: 'Date Added', name: 'date_added', widget: 'datetime', date_format: 'YYYY-MM-DD', time_format: false },
+              { label: 'Status', name: 'status', widget: 'select', options: [
+                { label: '🟢 Open', value: 'open' },
+                { label: '🟡 Closing Soon', value: 'soon' },
+                { label: '🔴 Closed', value: 'closed' }
+              ]},
+              { label: 'Country', name: 'country', widget: 'select', options: [
+                'USA','China','Taiwan','Germany','Italy','Hungary',
+                'Netherlands','Austria','UK','Japan','South Korea',
+                'Turkey','Canada','Australia','Sweden','Switzerland',
+                'France','Norway','Europe (Multiple)','Other'
+              ]},
+              { label: 'Flag Emoji', name: 'flag', widget: 'string', hint: 'e.g. 🇩🇪' },
+              { label: 'Level', name: 'level', widget: 'string', hint: 'e.g. MS / PhD / BS' },
+              { label: 'Funding Type', name: 'funding_type', widget: 'select', options: [
+                'Fully Funded','Partial Funding','Tuition Only','Stipend Only'
+              ]},
+              { label: 'Amount', name: 'amount', widget: 'string', hint: 'e.g. €934/month' },
+              { label: 'Deadline', name: 'deadline', widget: 'string', hint: 'e.g. November 15, 2026' },
+              { label: 'Duration', name: 'duration', widget: 'string', hint: 'e.g. 1-3 Years' },
+              { label: 'Host', name: 'host', widget: 'string' },
+              { label: 'Short Description', name: 'description', widget: 'text' },
+              { label: 'Full Description', name: 'full_description', widget: 'markdown' },
+              { label: 'Official Website', name: 'website', widget: 'string' },
+              { label: 'YouTube URL', name: 'youtube_url', widget: 'string', required: false },
+              { label: 'Facebook URL', name: 'facebook_url', widget: 'string', required: false },
+              { label: 'Tags', name: 'tags', widget: 'list', hint: 'e.g. europe, fully, ms, phd' },
+              { label: 'Featured (pin to top)', name: 'featured', widget: 'boolean', default: false }
+            ]
+          },
+          {
+            name: 'settings',
+            label: 'Site Settings',
+            files: [
+              {
+                label: 'General Settings',
+                name: 'general',
+                file: 'settings/general.json',
+                fields: [
+                  { label: 'Site Name', name: 'site_name', widget: 'string' },
+                  { label: 'Facebook URL', name: 'facebook_url', widget: 'string' },
+                  { label: 'YouTube URL', name: 'youtube_url', widget: 'string' },
+                  { label: 'Facebook Followers', name: 'fb_followers', widget: 'string' },
+                  { label: 'YouTube Subscribers', name: 'yt_subscribers', widget: 'string' }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    });
+
+    if (window.netlifyIdentity) {
+      window.netlifyIdentity.on('init', user => {
+        if (!user) {
+          window.netlifyIdentity.on('login', () => {
+            document.location.href = '/admin/';
+          });
+        }
+      });
+    }
+  </script>
+</body>
+</html>
