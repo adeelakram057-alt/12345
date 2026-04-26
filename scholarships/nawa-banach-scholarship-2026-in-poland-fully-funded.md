@@ -64,5 +64,5 @@ youtube_url: ''
 facebook_url: ''
 tags:
   - poland
-featured: true
+featured: false
 ---
