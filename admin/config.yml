@@ -2,7 +2,8 @@ backend:
   name: github
   repo: adeelakram057-alt/12345
   branch: main
-
+  base_url: https://oauth.sveltia.com
+  auth_endpoint: /github
 media_folder: images/uploads
 public_folder: /images/uploads
 
