@@ -4,8 +4,7 @@ backend:
   branch: main
   base_url: https://oauth.sveltia.com
   auth_endpoint: /github
-media_folder: images/uploads
-public_folder: /images/uploads
+  app_id: Ov23liGIKt5TbYmCWui5
 
 collections:
   - name: scholarships
