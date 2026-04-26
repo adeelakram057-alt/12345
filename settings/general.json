@@ -1,7 +1,17 @@
 {
-  "site_name": "ScholarPath",
-  "facebook_url": "https://www.facebook.com/adeelsp.akramps",
-  "youtube_url": "https://www.youtube.com/@adeelakram3811",
-  "fb_followers": "26K",
-  "yt_subscribers": "7.8K"
+  "rewrites": [
+    {
+      "source": "/admin",
+      "destination": "/admin/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/admin/config.yml",
+      "headers": [
+        { "key": "Content-Type", "value": "text/yaml" },
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    }
+  ]
 }
