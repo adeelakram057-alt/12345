@@ -1,0 +1,170 @@
+backend:
+  name: github
+  repo: adeelakram057-alt/12345
+  branch: main
+
+media_folder: images/uploads
+public_folder: /images/uploads
+
+collections:
+  - name: scholarships
+    label: Scholarships
+    folder: scholarships
+    create: true
+    slug: "{{slug}}"
+    summary: "{{title}} — {{country}} | {{deadline}}"
+    fields:
+      - label: Title
+        name: title
+        widget: string
+
+      - label: Date Added
+        name: date_added
+        widget: datetime
+        date_format: YYYY-MM-DD
+        time_format: false
+        hint: Used to sort latest scholarships first
+
+      - label: Status
+        name: status
+        widget: select
+        options:
+          - label: "🟢 Open"
+            value: open
+          - label: "🟡 Closing Soon"
+            value: soon
+          - label: "🔴 Closed"
+            value: closed
+        default: open
+
+      - label: Country
+        name: country
+        widget: select
+        options:
+          - USA
+          - China
+          - Taiwan
+          - Germany
+          - Italy
+          - Hungary
+          - Netherlands
+          - Austria
+          - UK
+          - Japan
+          - South Korea
+          - Turkey
+          - Canada
+          - Australia
+          - Sweden
+          - Switzerland
+          - France
+          - Norway
+          - "Europe (Multiple)"
+          - Other
+
+      - label: Flag Emoji
+        name: flag
+        widget: string
+        hint: "e.g. 🇩🇪 🇺🇸 🇬🇧 🇨🇳 🇹🇼"
+
+      - label: Level of Study
+        name: level
+        widget: string
+        hint: "e.g. MS / PhD  or  BS / MS / PhD"
+
+      - label: Funding Type
+        name: funding_type
+        widget: select
+        options:
+          - Fully Funded
+          - Partial Funding
+          - Tuition Only
+          - Stipend Only
+        default: Fully Funded
+
+      - label: Amount
+        name: amount
+        widget: string
+        hint: "e.g. €934/month or Full Tuition + Living"
+
+      - label: Application Deadline
+        name: deadline
+        widget: string
+        hint: "e.g. November 15, 2026"
+
+      - label: Duration
+        name: duration
+        widget: string
+        hint: "e.g. 1-3 Years"
+
+      - label: Host Institution
+        name: host
+        widget: string
+        hint: "e.g. German Universities"
+
+      - label: Short Description
+        name: description
+        widget: text
+        hint: "2-3 sentences shown on the scholarship card"
+
+      - label: Full Description
+        name: full_description
+        widget: markdown
+        hint: Full details shown on the scholarship detail page
+
+      - label: Official Website URL
+        name: website
+        widget: string
+        hint: "e.g. https://www.daad.de"
+
+      - label: Your YouTube Video URL
+        name: youtube_url
+        widget: string
+        required: false
+        hint: Link to your YouTube video about this scholarship
+
+      - label: Your Facebook Post URL
+        name: facebook_url
+        widget: string
+        required: false
+        hint: Link to your Facebook post about this scholarship
+
+      - label: Tags
+        name: tags
+        widget: list
+        hint: "Add tags: europe / asia / usa / fully / ms / phd / bs / internship"
+
+      - label: "Featured — Pin to Top"
+        name: featured
+        widget: boolean
+        default: false
+        hint: Turn ON to pin this scholarship to the very top
+
+  - name: settings
+    label: Site Settings
+    files:
+      - label: General Settings
+        name: general
+        file: settings/general.json
+        fields:
+          - label: Site Name
+            name: site_name
+            widget: string
+
+          - label: Facebook Page URL
+            name: facebook_url
+            widget: string
+
+          - label: YouTube Channel URL
+            name: youtube_url
+            widget: string
+
+          - label: Facebook Followers Count
+            name: fb_followers
+            widget: string
+            hint: "e.g. 26K"
+
+          - label: YouTube Subscribers Count
+            name: yt_subscribers
+            widget: string
+            hint: "e.g. 7K"
