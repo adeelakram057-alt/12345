@@ -4,30 +4,29 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ScholarPath Admin</title>
-  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
 </head>
 <body>
 
-  <!-- Step 1: Tell CMS we will init manually -->
   <script>window.CMS_MANUAL_INIT = true;</script>
-
-  <!-- Step 2: Load CMS -->
   <script src="https://unpkg.com/netlify-cms@2.10.192/dist/netlify-cms.js"></script>
 
-  <!-- Step 3: Init with full config inline — no config.yml needed -->
   <script>
   CMS.init({
     config: {
       load_config_file: false,
+
+      // ── GitHub backend — works on Vercel, no Netlify needed ──
       backend: {
-  name: "github",
-  repo: "adeel/scholarpath-website",       ← your GitHub username
-  branch: "main",
-  base_url: "https://scholarpath.vercel.app", ← your real Vercel URL
-  auth_endpoint: "api/auth"
-},
+        name: "github",
+        repo: "Scholar path admin/scholarpath-website",
+        branch: "main",
+        base_url: "https://12345-teal-delta.vercel.app",
+        auth_endpoint: "api/auth"
+      },
+
       media_folder: "images/uploads",
       public_folder: "/images/uploads",
+
       collections: [
         {
           name: "scholarships",
@@ -36,11 +35,7 @@
           create: true,
           slug: "{{slug}}",
           fields: [
-            {
-              label: "Title",
-              name: "title",
-              widget: "string"
-            },
+            { label: "Title", name: "title", widget: "string" },
             {
               label: "Date Added",
               name: "date_added",
@@ -54,9 +49,9 @@
               name: "status",
               widget: "select",
               options: [
-                { label: "Open", value: "open" },
-                { label: "Closing Soon", value: "soon" },
-                { label: "Closed", value: "closed" }
+                { label: "🟢 Open", value: "open" },
+                { label: "🟡 Closing Soon", value: "soon" },
+                { label: "🔴 Closed", value: "closed" }
               ],
               default: "open"
             },
@@ -75,7 +70,7 @@
               label: "Flag Emoji",
               name: "flag",
               widget: "string",
-              hint: "Paste the flag emoji e.g. 🇩🇪 🇺🇸 🇬🇧 🇨🇳"
+              hint: "Paste flag emoji e.g. 🇩🇪 🇺🇸 🇬🇧 🇨🇳"
             },
             {
               label: "Level of Study",
@@ -126,7 +121,7 @@
               label: "Full Description",
               name: "full_description",
               widget: "markdown",
-              hint: "Detailed info shown on the scholarship detail page"
+              hint: "Full details shown on scholarship detail page"
             },
             {
               label: "Official Website URL",
@@ -139,27 +134,27 @@
               name: "youtube_url",
               widget: "string",
               required: false,
-              hint: "Link to your YouTube video about this scholarship"
+              hint: "Your YouTube video about this scholarship"
             },
             {
               label: "Your Facebook Post URL",
               name: "facebook_url",
               widget: "string",
               required: false,
-              hint: "Link to your Facebook post about this scholarship"
+              hint: "Your Facebook post about this scholarship"
             },
             {
               label: "Tags",
               name: "tags",
               widget: "list",
-              hint: "Add tags: europe / asia / usa / fully / ms / phd / bs / internship"
+              hint: "Add: europe / asia / usa / fully / ms / phd / bs / internship"
             },
             {
-              label: "Featured - Pin to Top",
+              label: "Featured — Pin to Top",
               name: "featured",
               widget: "boolean",
               default: false,
-              hint: "Turn ON to show this scholarship at the very top"
+              hint: "Turn ON to pin this scholarship to the very top"
             }
           ]
         },
@@ -184,17 +179,6 @@
       ]
     }
   });
-
-  // Redirect to admin after login
-  if (window.netlifyIdentity) {
-    window.netlifyIdentity.on("init", function(user) {
-      if (!user) {
-        window.netlifyIdentity.on("login", function() {
-          document.location.href = "/admin/";
-        });
-      }
-    });
-  }
   </script>
 
 </body>
