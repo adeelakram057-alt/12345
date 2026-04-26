@@ -4,174 +4,169 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ScholarPath Admin</title>
+  <!-- Sveltia CMS — works on Vercel with GitHub login, no OAuth server needed -->
+  <link rel="stylesheet" href="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.css" />
 </head>
 <body>
-
-  <script>window.CMS_MANUAL_INIT = true;</script>
-  <script src="https://unpkg.com/netlify-cms@2.10.192/dist/netlify-cms.js"></script>
-
+  <script src="https://unpkg.com/@sveltia/cms/dist/sveltia-cms.js"></script>
   <script>
+  // Full config inline — no config.yml needed
+  window.CMS_MANUAL_INIT = true;
   CMS.init({
     config: {
       load_config_file: false,
-
-      // ── GitHub backend — works on Vercel, no Netlify needed ──
       backend: {
-        name: "github",
-        repo: "Scholar path admin/scholarpath-website",
-        branch: "main",
-        base_url: "https://12345-teal-delta.vercel.app",
-        auth_endpoint: "api/auth"
+        name: 'github',
+        repo: 'Scholar path admin/scholarpath-website',
+        branch: 'main',
       },
-
-      media_folder: "images/uploads",
-      public_folder: "/images/uploads",
-
+      media_folder: 'images/uploads',
+      public_folder: '/images/uploads',
       collections: [
         {
-          name: "scholarships",
-          label: "Scholarships",
-          folder: "scholarships",
+          name: 'scholarships',
+          label: 'Scholarships',
+          folder: 'scholarships',
           create: true,
-          slug: "{{slug}}",
+          slug: '{{slug}}',
+          summary: '{{title}} — {{country}} | {{deadline}}',
+          sort_field: 'date_added',
           fields: [
-            { label: "Title", name: "title", widget: "string" },
+            { label: 'Title', name: 'title', widget: 'string' },
             {
-              label: "Date Added",
-              name: "date_added",
-              widget: "datetime",
-              date_format: "YYYY-MM-DD",
+              label: 'Date Added',
+              name: 'date_added',
+              widget: 'datetime',
+              date_format: 'YYYY-MM-DD',
               time_format: false,
-              hint: "Used to sort latest scholarships first"
+              hint: 'Used to sort latest scholarships first on homepage'
             },
             {
-              label: "Status",
-              name: "status",
-              widget: "select",
+              label: 'Status',
+              name: 'status',
+              widget: 'select',
               options: [
-                { label: "🟢 Open", value: "open" },
-                { label: "🟡 Closing Soon", value: "soon" },
-                { label: "🔴 Closed", value: "closed" }
+                { label: '🟢 Open', value: 'open' },
+                { label: '🟡 Closing Soon', value: 'soon' },
+                { label: '🔴 Closed', value: 'closed' }
               ],
-              default: "open"
+              default: 'open'
             },
             {
-              label: "Country",
-              name: "country",
-              widget: "select",
+              label: 'Country',
+              name: 'country',
+              widget: 'select',
               options: [
-                "USA","China","Taiwan","Germany","Italy","Hungary",
-                "Netherlands","Austria","UK","Japan","South Korea",
-                "Turkey","Canada","Australia","Sweden","Switzerland",
-                "France","Norway","Europe (Multiple)","Other"
+                'USA','China','Taiwan','Germany','Italy','Hungary',
+                'Netherlands','Austria','UK','Japan','South Korea',
+                'Turkey','Canada','Australia','Sweden','Switzerland',
+                'France','Norway','Europe (Multiple)','Other'
               ]
             },
             {
-              label: "Flag Emoji",
-              name: "flag",
-              widget: "string",
-              hint: "Paste flag emoji e.g. 🇩🇪 🇺🇸 🇬🇧 🇨🇳"
+              label: 'Flag Emoji',
+              name: 'flag',
+              widget: 'string',
+              hint: 'e.g. 🇩🇪 🇺🇸 🇬🇧 🇨🇳 🇹🇼'
             },
             {
-              label: "Level of Study",
-              name: "level",
-              widget: "string",
-              hint: "e.g. MS / PhD  or  BS / MS / PhD"
+              label: 'Level of Study',
+              name: 'level',
+              widget: 'string',
+              hint: 'e.g. MS / PhD  or  BS / MS / PhD'
             },
             {
-              label: "Funding Type",
-              name: "funding_type",
-              widget: "select",
-              options: [
-                "Fully Funded","Partial Funding","Tuition Only","Stipend Only"
-              ],
-              default: "Fully Funded"
+              label: 'Funding Type',
+              name: 'funding_type',
+              widget: 'select',
+              options: ['Fully Funded','Partial Funding','Tuition Only','Stipend Only'],
+              default: 'Fully Funded'
             },
             {
-              label: "Amount",
-              name: "amount",
-              widget: "string",
-              hint: "e.g. €934/month or Full Tuition + Living"
+              label: 'Amount',
+              name: 'amount',
+              widget: 'string',
+              hint: 'e.g. €934/month or Full Tuition + Living'
             },
             {
-              label: "Application Deadline",
-              name: "deadline",
-              widget: "string",
-              hint: "e.g. November 15, 2026"
+              label: 'Application Deadline',
+              name: 'deadline',
+              widget: 'string',
+              hint: 'e.g. November 15, 2026'
             },
             {
-              label: "Duration",
-              name: "duration",
-              widget: "string",
-              hint: "e.g. 1-3 Years"
+              label: 'Duration',
+              name: 'duration',
+              widget: 'string',
+              hint: 'e.g. 1-3 Years'
             },
             {
-              label: "Host Institution",
-              name: "host",
-              widget: "string",
-              hint: "e.g. German Universities"
+              label: 'Host Institution',
+              name: 'host',
+              widget: 'string',
+              hint: 'e.g. German Universities'
             },
             {
-              label: "Short Description",
-              name: "description",
-              widget: "text",
-              hint: "2-3 sentences shown on the card"
+              label: 'Short Description',
+              name: 'description',
+              widget: 'text',
+              hint: 'Shown on the scholarship card (2-3 sentences)'
             },
             {
-              label: "Full Description",
-              name: "full_description",
-              widget: "markdown",
-              hint: "Full details shown on scholarship detail page"
+              label: 'Full Description',
+              name: 'full_description',
+              widget: 'markdown',
+              hint: 'Full details shown on the scholarship detail page'
             },
             {
-              label: "Official Website URL",
-              name: "website",
-              widget: "string",
-              hint: "e.g. https://www.daad.de"
+              label: 'Official Website URL',
+              name: 'website',
+              widget: 'string',
+              hint: 'e.g. https://www.daad.de'
             },
             {
-              label: "Your YouTube Video URL",
-              name: "youtube_url",
-              widget: "string",
+              label: 'Your YouTube Video URL',
+              name: 'youtube_url',
+              widget: 'string',
               required: false,
-              hint: "Your YouTube video about this scholarship"
+              hint: 'Link to your YouTube video about this scholarship'
             },
             {
-              label: "Your Facebook Post URL",
-              name: "facebook_url",
-              widget: "string",
+              label: 'Your Facebook Post URL',
+              name: 'facebook_url',
+              widget: 'string',
               required: false,
-              hint: "Your Facebook post about this scholarship"
+              hint: 'Link to your Facebook post about this scholarship'
             },
             {
-              label: "Tags",
-              name: "tags",
-              widget: "list",
-              hint: "Add: europe / asia / usa / fully / ms / phd / bs / internship"
+              label: 'Tags',
+              name: 'tags',
+              widget: 'list',
+              hint: 'Add: europe / asia / usa / fully / ms / phd / bs / internship'
             },
             {
-              label: "Featured — Pin to Top",
-              name: "featured",
-              widget: "boolean",
+              label: 'Featured — Pin to Top',
+              name: 'featured',
+              widget: 'boolean',
               default: false,
-              hint: "Turn ON to pin this scholarship to the very top"
+              hint: 'Turn ON to pin this scholarship to the very top of homepage'
             }
           ]
         },
         {
-          name: "settings",
-          label: "Site Settings",
+          name: 'settings',
+          label: 'Site Settings',
           files: [
             {
-              label: "General Settings",
-              name: "general",
-              file: "settings/general.json",
+              label: 'General Settings',
+              name: 'general',
+              file: 'settings/general.json',
               fields: [
-                { label: "Site Name", name: "site_name", widget: "string" },
-                { label: "Facebook Page URL", name: "facebook_url", widget: "string" },
-                { label: "YouTube Channel URL", name: "youtube_url", widget: "string" },
-                { label: "Facebook Followers Count", name: "fb_followers", widget: "string", hint: "e.g. 26K" },
-                { label: "YouTube Subscribers Count", name: "yt_subscribers", widget: "string", hint: "e.g. 7K" }
+                { label: 'Site Name', name: 'site_name', widget: 'string' },
+                { label: 'Facebook Page URL', name: 'facebook_url', widget: 'string' },
+                { label: 'YouTube Channel URL', name: 'youtube_url', widget: 'string' },
+                { label: 'Facebook Followers Count', name: 'fb_followers', widget: 'string', hint: 'e.g. 26K' },
+                { label: 'YouTube Subscribers Count', name: 'yt_subscribers', widget: 'string', hint: 'e.g. 7K' }
               ]
             }
           ]
@@ -180,6 +175,5 @@
     }
   });
   </script>
-
 </body>
 </html>
