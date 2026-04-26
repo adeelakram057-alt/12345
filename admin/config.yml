@@ -6,6 +6,9 @@ backend:
   auth_endpoint: /github
   app_id: Ov23liGIKt5TbYmCWui5
 
+media_folder: images/uploads
+public_folder: /images/uploads
+
 collections:
   - name: scholarships
     label: Scholarships
