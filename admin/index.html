@@ -20,9 +20,12 @@
     config: {
       load_config_file: false,
       backend: {
-        name: "git-gateway",
-        branch: "main"
-      },
+  name: "github",
+  repo: "adeel/scholarpath-website",       ← your GitHub username
+  branch: "main",
+  base_url: "https://scholarpath.vercel.app", ← your real Vercel URL
+  auth_endpoint: "api/auth"
+},
       media_folder: "images/uploads",
       public_folder: "/images/uploads",
       collections: [
