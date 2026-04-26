@@ -1,0 +1,46 @@
+backend:
+  name: github
+  repo: adeelakram057-alt/12345
+  branch: main
+
+media_folder: images/uploads
+public_folder: /images/uploads
+
+collections:
+  - name: scholarships
+    label: Scholarships
+    folder: scholarships
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - {label: Title, name: title, widget: string}
+      - {label: Date Added, name: date_added, widget: datetime, date_format: YYYY-MM-DD, time_format: false}
+      - {label: Status, name: status, widget: select, options: [open, soon, closed], default: open}
+      - {label: Country, name: country, widget: string}
+      - {label: Flag Emoji, name: flag, widget: string}
+      - {label: Level, name: level, widget: string}
+      - {label: Funding Type, name: funding_type, widget: select, options: [Fully Funded, Partial Funding, Tuition Only, Stipend Only]}
+      - {label: Amount, name: amount, widget: string}
+      - {label: Deadline, name: deadline, widget: string}
+      - {label: Duration, name: duration, widget: string}
+      - {label: Host, name: host, widget: string}
+      - {label: Short Description, name: description, widget: text}
+      - {label: Full Description, name: full_description, widget: markdown}
+      - {label: Website URL, name: website, widget: string}
+      - {label: YouTube URL, name: youtube_url, widget: string, required: false}
+      - {label: Facebook URL, name: facebook_url, widget: string, required: false}
+      - {label: Tags, name: tags, widget: list}
+      - {label: Featured, name: featured, widget: boolean, default: false}
+
+  - name: settings
+    label: Site Settings
+    files:
+      - label: General Settings
+        name: general
+        file: settings/general.json
+        fields:
+          - {label: Site Name, name: site_name, widget: string}
+          - {label: Facebook URL, name: facebook_url, widget: string}
+          - {label: YouTube URL, name: youtube_url, widget: string}
+          - {label: Facebook Followers, name: fb_followers, widget: string}
+          - {label: YouTube Subscribers, name: yt_subscribers, widget: string}
