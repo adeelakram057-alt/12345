@@ -1,15 +1,12 @@
 // api/auth/index.js
-// GitHub OAuth handler for Netlify CMS on Vercel
-// Handles both the login redirect and the callback
-
 const CLIENT_ID     = 'Ov23liGIKt5TbYmCWui5';
 const CLIENT_SECRET = '74c520ed43b2f72b0f29928f8062202ffaa9507c';
 const SITE_URL      = 'https://12345-teal-delta.vercel.app';
 
 export default async function handler(req, res) {
-  const { code, provider } = req.query;
+  const { code } = req.query;
 
-  // ── Step 1: Redirect to GitHub login ──
+  // ── Step 1: No code yet → redirect to GitHub login ──
   if (!code) {
     const params = new URLSearchParams({
       client_id: CLIENT_ID,
@@ -21,7 +18,7 @@ export default async function handler(req, res) {
     );
   }
 
-  // ── Step 2: Exchange code for access token ──
+  // ── Step 2: Exchange code for token ──
   try {
     const tokenRes = await fetch(
       'https://github.com/login/oauth/access_token',
@@ -34,44 +31,74 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           client_id: CLIENT_ID,
           client_secret: CLIENT_SECRET,
-          code: code
+          code
         })
       }
     );
 
-    const tokenData = await tokenRes.json();
+    const data = await tokenRes.json();
 
-    if (tokenData.error) {
+    if (data.error || !data.access_token) {
       return res.status(400).send(`
-        <html><body>
-          <h3>OAuth Error: ${tokenData.error}</h3>
-          <p>${tokenData.error_description}</p>
-          <a href="${SITE_URL}/admin">Try again</a>
+        <!DOCTYPE html><html><body style="font-family:sans-serif;text-align:center;padding:40px">
+          <h2>❌ Login Error</h2>
+          <p>${data.error_description || 'Could not get access token'}</p>
+          <a href="${SITE_URL}/admin">← Try again</a>
         </body></html>
       `);
     }
 
-    const token = tokenData.access_token;
+    const token = data.access_token;
 
     // ── Step 3: Send token back to CMS via postMessage ──
     return res.send(`
       <!DOCTYPE html>
       <html>
-      <head><title>Authenticating...</title></head>
+      <head>
+        <title>Authenticating...</title>
+        <style>
+          body { font-family: sans-serif; text-align: center; padding: 60px; background: #EBF4FF; }
+          .box { background: #fff; border-radius: 12px; padding: 40px; max-width: 400px; margin: 0 auto; box-shadow: 0 4px 20px rgba(0,0,0,.1); }
+          h2 { color: #1A5C9A; }
+          p { color: #5A7A9A; }
+        </style>
+      </head>
       <body>
-        <p style="font-family:sans-serif;text-align:center;margin-top:40px">
-          ✅ Logging you in to ScholarPath Admin...
-        </p>
+        <div class="box">
+          <h2>✅ Login Successful!</h2>
+          <p>Redirecting you to the admin panel...</p>
+          <p style="font-size:.8rem;margin-top:20px">If nothing happens, <a href="${SITE_URL}/admin">click here</a></p>
+        </div>
         <script>
-          // Send token to CMS
-          const receiveMessage = (e) => {
-            window.opener.postMessage(
-              'authorization:github:success:${JSON.stringify({token: "TOKEN", provider: "github"}).replace("TOKEN", "' + token + '")}',
-              e.origin
-            );
-          };
-          window.addEventListener('message', receiveMessage, false);
-          window.opener.postMessage('authorizing:github', '*');
+          (function() {
+            // The message Netlify CMS expects to receive
+            var message = 'authorization:github:success:' + JSON.stringify({
+              token: '${token}',
+              provider: 'github'
+            });
+
+            // Try to send to opener window (the admin panel)
+            function sendToken() {
+              if (window.opener) {
+                window.opener.postMessage(message, '${SITE_URL}');
+                setTimeout(function() { window.close(); }, 1000);
+              } else {
+                // No opener — store token and redirect
+                localStorage.setItem('netlify-cms-github-token', '${token}');
+                window.location.href = '${SITE_URL}/admin';
+              }
+            }
+
+            // Listen for CMS ready signal then send token
+            window.addEventListener('message', function(e) {
+              if (e.data === 'authorizing:github') {
+                sendToken();
+              }
+            });
+
+            // Also try sending immediately
+            setTimeout(sendToken, 500);
+          })();
         </script>
       </body>
       </html>
@@ -79,10 +106,10 @@ export default async function handler(req, res) {
 
   } catch (err) {
     return res.status(500).send(`
-      <html><body>
-        <h3>Server Error</h3>
+      <!DOCTYPE html><html><body style="font-family:sans-serif;text-align:center;padding:40px">
+        <h2>❌ Server Error</h2>
         <p>${err.message}</p>
-        <a href="${SITE_URL}/admin">Go back to admin</a>
+        <a href="${SITE_URL}/admin">← Go back</a>
       </body></html>
     `);
   }
