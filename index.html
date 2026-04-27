@@ -530,42 +530,27 @@ async function loadScholarships() {
   const grid    = document.getElementById('schGrid');
   const loading = document.getElementById('schLoading');
   const empty   = document.getElementById('schEmpty');
-  const REPO    = 'adeelakram057-alt/12345';
-  const BRANCH  = 'main';
-  const RAW     = 'https://raw.githubusercontent.com/' + REPO + '/' + BRANCH;
-  const API     = 'https://api.github.com/repos/' + REPO + '/contents/scholarships';
+  const RAW     = 'https://raw.githubusercontent.com/adeelakram057-alt/12345/main';
 
   // Parse .md frontmatter OR .json
   function parseFile(text, filename) {
     if (filename.endsWith('.json')) {
       try { return JSON.parse(text); } catch(e) { return null; }
     }
-    // Parse markdown frontmatter (between --- and ---)
     if (filename.endsWith('.md')) {
       try {
-        const match = text.match(/^---
-([\s\S]*?)
----/);
+        const match = text.match(/^---([\s\S]*?)---/);
         if (!match) return null;
-        const fm = match[1];
         const obj = {};
-        fm.split('
-').forEach(line => {
-          const idx = line.indexOf(':');
-          if (idx < 0) return;
-          const key = line.slice(0,idx).trim();
-          let val   = line.slice(idx+1).trim();
-          // Remove quotes
-          if ((val.startsWith('"') && val.endsWith('"')) ||
-              (val.startsWith("'") && val.endsWith("'"))) {
-            val = val.slice(1,-1);
-          }
-          // Boolean
-          if (val === 'true') val = true;
-          else if (val === 'false') val = false;
-          obj[key] = val;
+        match[1].split('\n').forEach(line => {
+          const i = line.indexOf(':');
+          if (i < 0) return;
+          const k = line.slice(0,i).trim();
+          let v   = line.slice(i+1).trim().replace(/^["']|["']$/g,'');
+          if (v==='true') v=true;
+          else if (v==='false') v=false;
+          obj[k] = v;
         });
-        // Get body as full_description if not set
         const body = text.slice(match[0].length).trim();
         if (body && !obj.full_description) obj.full_description = body;
         return obj;
@@ -574,38 +559,55 @@ async function loadScholarships() {
     return null;
   }
 
-  try {
-    const res = await fetch(API + '?ref=' + BRANCH + '&t=' + Date.now(), {
-      headers: { 'Accept': 'application/vnd.github.v3+json' }
-    });
+  // Known scholarship files — add new ones here after saving from admin
+  // This is the RELIABLE list that always works
+  const knownFiles = [
+    'daad-scholarship-germany.json',
+    'mext-scholarship-in-japan-2027.md',
+    'nawa-banach-scholarship-2026-in-poland-fully-funded.md',
+    'nawa-banach-scholarship-2026-in-poland-fully-funded-1.md'
+  ];
 
-    if (!res.ok) throw new Error('API ' + res.status);
-    const files = (await res.json()).filter(f =>
-      f.name.endsWith('.json') || f.name.endsWith('.md')
+  try {
+    // First try GitHub API to get the full fresh list
+    const apiRes = await fetch(
+      'https://api.github.com/repos/adeelakram057-alt/12345/contents/scholarships',
+      { headers: { 'Accept': 'application/vnd.github.v3+json', 'Cache-Control': 'no-cache' } }
     );
 
-    if (!files.length) {
+    let fileList = knownFiles; // fallback to known files
+
+    if (apiRes.ok) {
+      const apiData = await apiRes.json();
+      if (Array.isArray(apiData)) {
+        fileList = apiData
+          .filter(f => f.name.endsWith('.json') || f.name.endsWith('.md'))
+          .map(f => f.name);
+      }
+    }
+
+    if (!fileList.length) {
       loading.style.display = 'none';
       empty.style.display   = 'block';
       return;
     }
 
-    // Fetch each file as raw text
-    const results = await Promise.all(
-      files.map(f => {
-        const rawUrl = RAW + '/scholarships/' + f.name + '?t=' + Date.now();
-        return fetch(rawUrl)
-          .then(r => r.text())
+    // Fetch each file directly from raw GitHub (no CORS issues)
+    const results = await Promise.allSettled(
+      fileList.map(name =>
+        fetch(RAW + '/scholarships/' + name, { cache: 'no-store' })
+          .then(r => r.ok ? r.text() : null)
           .then(text => {
-            const data = parseFile(text, f.name);
-            const slug = f.name.replace(/\.(json|md)$/, '');
-            return data ? { data, slug } : null;
+            if (!text) return null;
+            const data = parseFile(text, name);
+            return data && data.title ? { data, slug: name.replace(/\.(json|md)$/, '') } : null;
           })
-          .catch(() => null);
-      })
+      )
     );
 
-    const valid = results.filter(r => r && r.data && r.data.title);
+    const valid = results
+      .filter(r => r.status === 'fulfilled' && r.value)
+      .map(r => r.value);
 
     if (!valid.length) {
       loading.style.display = 'none';
@@ -613,12 +615,12 @@ async function loadScholarships() {
       return;
     }
 
-    // Sort: featured first, then newest
+    // Sort: featured first, then newest by date
     valid.sort((a, b) => {
       if (a.data.featured && !b.data.featured) return -1;
       if (!a.data.featured && b.data.featured) return 1;
-      const da = (a.data.date_added||'').replace(/-/g,'');
-      const db = (b.data.date_added||'').replace(/-/g,'');
+      const da = (a.data.date_added || '').replace(/-/g, '');
+      const db = (b.data.date_added || '').replace(/-/g, '');
       return db.localeCompare(da);
     });
 
@@ -627,10 +629,10 @@ async function loadScholarships() {
     loading.style.display = 'none';
     empty.style.display   = 'none';
     grid.style.display    = 'grid';
-    grid.querySelectorAll('.card').forEach(el => { el.style.opacity='0'; obs.observe(el); });
+    grid.querySelectorAll('.card').forEach(el => { el.style.opacity = '0'; obs.observe(el); });
 
   } catch(err) {
-    console.error('Load error:', err);
+    console.error('Scholarship load error:', err);
     loading.style.display = 'none';
     empty.style.display   = 'block';
   }
@@ -716,7 +718,9 @@ document.querySelectorAll('.card,.soc-card,.feat').forEach(el=>{el.style.opacity
 ━━━━━━━━━━━━━━━━━━━━ */
 const YT_API_KEY = 'AIzaSyApabepfo4m6bTen7yzjmgFGYiWxbGFaO0';
 const YT_HANDLE  = 'adeelakram3811';
-const YT_MAX     = 6; // number of videos to show
+const YT_MAX     = 6;
+// Channel ID for @adeelakram3811 — avoids extra API call
+const YT_CHANNEL_ID = null; // will be fetched dynamically
 
 function timeAgo(dateStr) {
   const now = new Date();
