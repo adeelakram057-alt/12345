@@ -471,7 +471,7 @@ function buildCard(s, slug) {
        data-fund="${s.funding_type||''}" data-status="${status}"
        style="opacity:0;animation:up .45s ease forwards">
       <div class="card-top">
-        <span class="cflag">${s.flag||'🎓'}</span>
+        <span class="cflag" style="font-size:2.2rem;line-height:1">${s.flag||'🎓'}</span>
         <div class="cbadges">
           ${isNew ? '<span class="cb b-new">🆕 New</span>' : ''}
           <span class="cb ${statusCls2[status]||'b-open'}">${statusLabel2[status]||'Open'}</span>
@@ -535,14 +535,54 @@ async function loadScholarships() {
   const RAW     = 'https://raw.githubusercontent.com/' + REPO + '/' + BRANCH;
   const API     = 'https://api.github.com/repos/' + REPO + '/contents/scholarships';
 
+  // Parse .md frontmatter OR .json
+  function parseFile(text, filename) {
+    if (filename.endsWith('.json')) {
+      try { return JSON.parse(text); } catch(e) { return null; }
+    }
+    // Parse markdown frontmatter (between --- and ---)
+    if (filename.endsWith('.md')) {
+      try {
+        const match = text.match(/^---
+([\s\S]*?)
+---/);
+        if (!match) return null;
+        const fm = match[1];
+        const obj = {};
+        fm.split('
+').forEach(line => {
+          const idx = line.indexOf(':');
+          if (idx < 0) return;
+          const key = line.slice(0,idx).trim();
+          let val   = line.slice(idx+1).trim();
+          // Remove quotes
+          if ((val.startsWith('"') && val.endsWith('"')) ||
+              (val.startsWith("'") && val.endsWith("'"))) {
+            val = val.slice(1,-1);
+          }
+          // Boolean
+          if (val === 'true') val = true;
+          else if (val === 'false') val = false;
+          obj[key] = val;
+        });
+        // Get body as full_description if not set
+        const body = text.slice(match[0].length).trim();
+        if (body && !obj.full_description) obj.full_description = body;
+        return obj;
+      } catch(e) { return null; }
+    }
+    return null;
+  }
+
   try {
-    // Use GitHub API with cache-busting to avoid rate limit cache
     const res = await fetch(API + '?ref=' + BRANCH + '&t=' + Date.now(), {
       headers: { 'Accept': 'application/vnd.github.v3+json' }
     });
 
     if (!res.ok) throw new Error('API ' + res.status);
-    const files = (await res.json()).filter(f => f.name.endsWith('.json'));
+    const files = (await res.json()).filter(f =>
+      f.name.endsWith('.json') || f.name.endsWith('.md')
+    );
 
     if (!files.length) {
       loading.style.display = 'none';
@@ -550,18 +590,21 @@ async function loadScholarships() {
       return;
     }
 
-    // Fetch each file using raw URL (no rate limit)
+    // Fetch each file as raw text
     const results = await Promise.all(
       files.map(f => {
         const rawUrl = RAW + '/scholarships/' + f.name + '?t=' + Date.now();
         return fetch(rawUrl)
-          .then(r => r.json())
-          .then(data => ({ data, slug: f.name.replace('.json','') }))
+          .then(r => r.text())
+          .then(text => {
+            const data = parseFile(text, f.name);
+            const slug = f.name.replace(/\.(json|md)$/, '');
+            return data ? { data, slug } : null;
+          })
           .catch(() => null);
       })
     );
 
-    // Filter out any failed fetches
     const valid = results.filter(r => r && r.data && r.data.title);
 
     if (!valid.length) {
@@ -570,7 +613,7 @@ async function loadScholarships() {
       return;
     }
 
-    // Sort: featured first, then newest by date_added
+    // Sort: featured first, then newest
     valid.sort((a, b) => {
       if (a.data.featured && !b.data.featured) return -1;
       if (!a.data.featured && b.data.featured) return 1;
@@ -587,32 +630,7 @@ async function loadScholarships() {
     grid.querySelectorAll('.card').forEach(el => { el.style.opacity='0'; obs.observe(el); });
 
   } catch(err) {
-    console.error('Scholarship load error:', err);
-    // Fallback: try loading known files directly
-    try {
-      const knownFiles = ['daad-scholarship-germany', 'mext-scholarship-in-japan-2027'];
-      const fallback = await Promise.all(
-        knownFiles.map(slug =>
-          fetch(RAW + '/scholarships/' + slug + '.json?t=' + Date.now())
-            .then(r => r.ok ? r.json() : null)
-            .then(data => data ? {data, slug} : null)
-            .catch(() => null)
-        )
-      );
-      const valid2 = fallback.filter(r => r && r.data && r.data.title);
-      if (valid2.length) {
-        valid2.sort((a,b) => {
-          if (a.data.featured && !b.data.featured) return -1;
-          if (!a.data.featured && b.data.featured) return 1;
-          return ((b.data.date_added||'')).localeCompare(a.data.date_added||'');
-        });
-        cards = valid2.map(r => r.data);
-        grid.innerHTML = valid2.map(r => buildCard(r.data, r.slug)).join('');
-        loading.style.display = 'none';
-        grid.style.display    = 'grid';
-        return;
-      }
-    } catch(e2) { console.error(e2); }
+    console.error('Load error:', err);
     loading.style.display = 'none';
     empty.style.display   = 'block';
   }
