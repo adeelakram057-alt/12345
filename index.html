@@ -399,12 +399,12 @@ footer{padding:36px 6vw;border-top:none;background:linear-gradient(135deg,#1A3A5
     <a href="https://www.youtube.com/@adeelakram3811" target="_blank" class="btn-g" id="ytSubscribeBtn" style="font-size:.82rem;padding:9px 20px">Subscribe ↗</a>
   </div>
   <!-- Loading state -->
-  <div id="ytLoading" style="text-align:center;padding:40px;color:var(--muted)">
+  <div id="ytLoading" style="text-align:center;padding:40px;color:#fff">
     <div style="font-size:2rem;margin-bottom:12px;animation:spin 1s linear infinite;display:inline-block">⏳</div>
     <div style="font-size:.9rem">Loading latest videos from YouTube…</div>
   </div>
   <!-- Error state -->
-  <div id="ytError" style="display:none;text-align:center;padding:40px;color:var(--muted)">
+  <div id="ytError" style="display:none;text-align:center;padding:40px;color:#fff">
     <div style="font-size:2rem;margin-bottom:12px">📺</div>
     <div style="font-size:.9rem;margin-bottom:16px">Could not load videos right now.</div>
     <a href="https://www.youtube.com/@adeelakram3811" target="_blank" class="btn-p" style="font-size:.85rem;padding:10px 22px">Visit YouTube Channel ↗</a>
@@ -671,8 +671,9 @@ function doSearch(q){
 }
 
 function closeSearch(){document.getElementById('sResults').classList.remove('on')}
-/* ── Load settings from CMS (settings/general.json) ── */
-fetch('/settings/general.json')
+/* ── Load settings from CMS via raw GitHub ── */
+const SETTINGS_URL = 'https://raw.githubusercontent.com/adeelakram057-alt/12345/main/settings/general.json?t=' + Date.now();
+fetch(SETTINGS_URL)
   .then(r => r.json())
   .then(s => {
     // Update Facebook link everywhere
