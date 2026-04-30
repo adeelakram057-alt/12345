@@ -715,157 +715,140 @@ document.querySelectorAll('.card,.soc-card,.feat').forEach(el=>{el.style.opacity
 /* ━━━━━━━━━━━━━━━━━━━━
    YOUTUBE AUTO LOADER
 ━━━━━━━━━━━━━━━━━━━━ */
-const YT_API_KEY = 'AIzaSyApabepfo4m6bTen7yzjmgFGYiWxbGFaO0';
-const YT_HANDLE  = 'adeelakram3811';
-const YT_MAX     = 6;
-// Channel ID for @adeelakram3811 — avoids extra API call
-const YT_CHANNEL_ID = null; // will be fetched dynamically
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   YOUTUBE LOADER — Direct RSS via Channel ID
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+const YT_CHANNEL_ID     = 'UCsrQ367BwXfaC45QcPOt9Yg';
+const YT_CHANNEL_HANDLE = 'adeelakram3811';
+const YT_MAX_VIDEOS     = 6;
 
 function timeAgo(dateStr) {
-  const now = new Date();
-  const past = new Date(dateStr);
-  const diff = Math.floor((now - past) / 1000);
-  if (diff < 3600)   return Math.floor(diff/60) + ' minutes ago';
-  if (diff < 86400)  return Math.floor(diff/3600) + ' hours ago';
-  if (diff < 604800) return Math.floor(diff/86400) + ' days ago';
-  if (diff < 2592000)return Math.floor(diff/604800) + ' weeks ago';
-  if (diff < 31536000)return Math.floor(diff/2592000) + ' months ago';
-  return Math.floor(diff/31536000) + ' years ago';
+  const diff = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+  if (diff < 3600)    return Math.floor(diff/60) + ' min ago';
+  if (diff < 86400)   return Math.floor(diff/3600) + ' hours ago';
+  if (diff < 604800)  return Math.floor(diff/86400) + ' days ago';
+  if (diff < 2592000) return Math.floor(diff/604800) + ' weeks ago';
+  return Math.floor(diff/2592000) + ' months ago';
 }
 
-function formatViews(n) {
-  n = parseInt(n) || 0;
-  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
-  if (n >= 1000)    return (n/1000).toFixed(1) + 'K';
-  return n.toString();
-}
-
-function renderVideos(videos) {
-  const grid = document.getElementById('ytGrid');
-  const loading = document.getElementById('ytLoading');
-  const error = document.getElementById('ytError');
-
-  if (!videos || videos.length === 0) {
-    loading.style.display = 'none';
-    error.style.display = 'block';
-    return;
+function buildVideoCard(item) {
+  // Extract video ID from link or guid
+  let vidId = '';
+  if (item.link && item.link.includes('v=')) {
+    vidId = item.link.split('v=')[1].split('&')[0];
+  } else if (item.guid) {
+    vidId = item.guid.split(':').pop();
   }
 
-  grid.innerHTML = videos.map(v => `
-    <a href="https://www.youtube.com/watch?v=${v.id}" target="_blank" class="yc" style="opacity:0;animation:up .5s ease forwards">
-      <div class="yt-thumb" style="background:#000">
-        <img src="${v.thumb}" alt="${v.title}"
-          style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity:.85">
-        <div class="yt-play" style="position:relative;z-index:2">▶</div>
+  const thumb = vidId
+    ? 'https://img.youtube.com/vi/' + vidId + '/hqdefault.jpg'
+    : (item.thumbnail || '');
+
+  const pubDate  = item.pubDate || item.published || '';
+  const timeText = pubDate ? timeAgo(pubDate) : '';
+  const link     = item.link || ('https://www.youtube.com/watch?v=' + vidId);
+
+  return `
+    <a href="${link}" target="_blank" class="yc"
+       style="opacity:0;animation:up .5s ease forwards;text-decoration:none">
+      <div class="yt-thumb" style="position:relative;overflow:hidden;aspect-ratio:16/9;background:#000">
+        ${thumb
+          ? `<img src="${thumb}"
+                  alt="${(item.title||'').replace(/"/g,'&quot;')}"
+                  loading="lazy"
+                  style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity:.9"
+                  onerror="this.style.display='none'">`
+          : '<div class="yt-bg"></div>'}
+        <div style="
+          position:absolute;top:50%;left:50%;
+          transform:translate(-50%,-50%);z-index:2;
+          width:52px;height:52px;
+          background:rgba(255,0,0,.9);
+          border-radius:50%;
+          display:flex;align-items:center;justify-content:center;
+          font-size:1.2rem;
+          box-shadow:0 4px 16px rgba(0,0,0,.4);
+          transition:transform .2s,background .2s">▶</div>
       </div>
       <div class="yi">
-        <h4>${v.title}</h4>
+        <h4 style="
+          display:-webkit-box;
+          -webkit-line-clamp:2;
+          -webkit-box-orient:vertical;
+          overflow:hidden">${item.title || 'Untitled Video'}</h4>
         <div class="ym">
-          <span>👁 ${formatViews(v.views)} views</span>
-          <span>${timeAgo(v.published)}</span>
+          <span>📅 ${timeText}</span>
+          <span style="color:var(--gold);font-weight:600">Watch →</span>
         </div>
       </div>
-    </a>`).join('');
-
-  loading.style.display = 'none';
-  error.style.display = 'none';
-  grid.style.display = 'grid';
+    </a>`;
 }
 
 async function loadYouTubeVideos() {
   const grid    = document.getElementById('ytGrid');
   const loading = document.getElementById('ytLoading');
   const error   = document.getElementById('ytError');
-  const KEY     = 'AIzaSyApabepfo4m6bTen7yzjmgFGYiWxbGFaO0';
-  const HANDLE  = 'adeelakram3811';
-  const MAX     = 6;
 
-  function timeAgo(d) {
-    const s = Math.floor((Date.now()-new Date(d))/1000);
-    if (s<3600)  return Math.floor(s/60)+'m ago';
-    if (s<86400) return Math.floor(s/3600)+'h ago';
-    if (s<604800)return Math.floor(s/86400)+' days ago';
-    if (s<2592000)return Math.floor(s/604800)+' weeks ago';
-    return Math.floor(s/2592000)+' months ago';
-  }
-  function fmtViews(n) {
-    n=parseInt(n)||0;
-    if(n>=1000000) return (n/1000000).toFixed(1)+'M';
-    if(n>=1000)    return (n/1000).toFixed(1)+'K';
-    return n+'';
-  }
+  // RSS feed URLs to try in order — Channel ID is most reliable
+  const RSS_FEEDS = [
+    'https://www.youtube.com/feeds/videos.xml?channel_id=' + YT_CHANNEL_ID,
+    'https://www.youtube.com/feeds/videos.xml?user=' + YT_CHANNEL_HANDLE,
+  ];
 
-  try {
-    // Step 1: Get channel info
-    const chRes = await fetch(
-      `https://www.googleapis.com/youtube/v3/channels?part=id,contentDetails,statistics&forHandle=${HANDLE}&key=${KEY}`
-    );
-    if (!chRes.ok) throw new Error('Channel API ' + chRes.status);
-    const chData = await chRes.json();
-    if (!chData.items || !chData.items.length) throw new Error('No channel found');
+  // rss2json proxy converts YouTube RSS to JSON (free tier, no key needed)
+  const PROXY_BASE = 'https://api.rss2json.com/v1/api.json?rss_url=';
 
-    const ch        = chData.items[0];
-    const uploadsId = ch.contentDetails.relatedPlaylists.uploads;
-    const subCount  = ch.statistics.subscriberCount;
+  let videos = null;
 
-    // Update subscriber counts
-    if (subCount) {
-      const fmt = fmtViews(subCount);
-      ['heroYtCount','ytCount'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = fmt;
-      });
+  for (const feed of RSS_FEEDS) {
+    try {
+      const url = PROXY_BASE + encodeURIComponent(feed) + '&count=' + YT_MAX_VIDEOS;
+      const res = await fetch(url, {cache: 'no-store'});
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data.status === 'ok' && data.items && data.items.length > 0) {
+        videos = data.items;
+        break; // success — stop trying
+      }
+    } catch(e) {
+      console.warn('RSS feed failed:', feed, e);
+      continue;
     }
+  }
 
-    // Step 2: Get latest videos
-    const plRes = await fetch(
-      `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=${MAX}&playlistId=${uploadsId}&key=${KEY}`
-    );
-    if (!plRes.ok) throw new Error('Playlist API ' + plRes.status);
-    const plData = await plRes.json();
-    if (!plData.items || !plData.items.length) throw new Error('No videos');
+  if (videos && videos.length) {
+    // Success — render video cards
+    grid.innerHTML = videos
+      .slice(0, YT_MAX_VIDEOS)
+      .map(item => buildVideoCard(item))
+      .join('');
 
-    const videoIds = plData.items.map(i => i.snippet.resourceId.videoId).join(',');
-
-    // Step 3: Get view counts
-    const stRes = await fetch(
-      `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${videoIds}&key=${KEY}`
-    );
-    const stData = stRes.ok ? await stRes.json() : {items:[]};
-    const stMap  = {};
-    (stData.items||[]).forEach(v => { stMap[v.id] = v.statistics; });
-
-    // Build video cards
-    const videos = plData.items.map(item => {
-      const s   = item.snippet;
-      const vid = s.resourceId.videoId;
-      const st  = stMap[vid] || {};
-      const thumb = (s.thumbnails.high || s.thumbnails.medium || s.thumbnails.default || {}).url || '';
-      return `
-        <a href="https://www.youtube.com/watch?v=${vid}" target="_blank" class="yc" style="opacity:0;animation:up .5s ease forwards">
-          <div class="yt-thumb" style="background:#000;position:relative;aspect-ratio:16/9;overflow:hidden">
-            ${thumb ? `<img src="${thumb}" alt="${s.title.replace(/"/g,'')}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity:.85">` : '<div class="yt-bg"></div>'}
-            <div class="yt-play" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2;width:48px;height:48px;background:rgba(255,0,0,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem">▶</div>
-          </div>
-          <div class="yi">
-            <h4>${s.title}</h4>
-            <div class="ym">
-              <span>👁 ${fmtViews(st.viewCount)} views</span>
-              <span>${timeAgo(s.publishedAt)}</span>
-            </div>
-          </div>
-        </a>`;
-    });
-
-    grid.innerHTML = videos.join('');
     loading.style.display = 'none';
     error.style.display   = 'none';
     grid.style.display    = 'grid';
 
-  } catch(err) {
-    console.error('YouTube error:', err);
+  } else {
+    // All feeds failed — show nice error with direct channel link
     loading.style.display = 'none';
-    error.style.display   = 'block';
+    error.innerHTML = `
+      <div style="font-size:3rem;margin-bottom:16px">📺</div>
+      <div style="font-size:1.1rem;font-weight:700;color:#fff;margin-bottom:8px">
+        Latest Videos from ScholarPath
+      </div>
+      <div style="font-size:.88rem;color:rgba(255,255,255,.75);margin-bottom:24px;max-width:360px;margin-left:auto;margin-right:auto">
+        Visit the YouTube channel for the latest scholarship guides, tips and success stories.
+      </div>
+      <a href="https://www.youtube.com/@${YT_CHANNEL_HANDLE}"
+         target="_blank"
+         style="display:inline-flex;align-items:center;gap:8px;
+                background:var(--gold);color:#1A3A5C;
+                padding:13px 28px;border-radius:8px;
+                font-weight:700;text-decoration:none;font-size:.95rem;
+                box-shadow:0 6px 20px rgba(201,168,76,.4);
+                transition:all .2s">
+        ▶ Visit YouTube Channel ↗
+      </a>`;
+    error.style.display = 'block';
   }
 }
 loadYouTubeVideos();
